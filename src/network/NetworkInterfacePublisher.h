@@ -22,17 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * NetworkInterfacePublisher.h
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
-
-#ifndef SRC_NETWORK_NETWORKINTERFACEPUBLISHER_H_
-#define SRC_NETWORK_NETWORKINTERFACEPUBLISHER_H_
-
-#include <stdio.h> // shall be removed later.
+#pragma once
 
 namespace network {
 class NetworkInterfaceSubscriber;
@@ -45,7 +35,8 @@ protected:
 public:
 	void registerSubscriber(NetworkInterfaceSubscriber *cb){
 		if(this->cb != nullptr) {
-			printf("ERROR!\n");
+//			printf("ERROR!\n");
+			return;
 		}
 		this->cb = cb;
 	}
@@ -56,4 +47,3 @@ public:
 
 } /* namespace network */
 
-#endif /* SRC_NETWORK_NETWORKINTERFACEPUBLISHER_H_ */

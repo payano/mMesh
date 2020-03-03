@@ -22,19 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * Islands.h
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
-
-
-#ifndef SRC_ISLANDS_ISLANDS_H_
-#define SRC_ISLANDS_ISLANDS_H_
+#pragma once
 
 #include <list>
-#include "../DataTypes.h"
+#include "DataTypes.h"
+#include <stdio.h> // REMOVE
 
 namespace node {
 class Node;
@@ -85,4 +77,3 @@ public:
 
 } /* namespace node */
 
-#endif /* SRC_ISLANDS_ISLANDS_H_ */

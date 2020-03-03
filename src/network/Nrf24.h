@@ -22,15 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * Nrf24.h
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
-
-#ifndef SRC_NETWORK_NRF24_H_
-#define SRC_NETWORK_NRF24_H_
+#pragma once
 
 #include <stdint.h>
 #include "NetworkInterface.h"
@@ -54,4 +46,3 @@ public:
 
 } /* namespace network */
 
-#endif /* SRC_NETWORK_NRF24_H_ */

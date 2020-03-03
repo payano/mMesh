@@ -22,24 +22,3 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-///*
-// * DummyNWInterface.cpp
-// *
-// *  Created on: Feb 19, 2020
-// *      Author: evsejho
-// */
-//
-//#include "DummyNWInterface.h"
-//
-//namespace network {
-//
-//DummyNWInterface::DummyNWInterface() {
-//	// TODO Auto-generated constructor stub
-//
-//}
-//
-//DummyNWInterface::~DummyNWInterface() {
-//	// TODO Auto-generated destructor stub
-//}
-//
-//} /* namespace network */

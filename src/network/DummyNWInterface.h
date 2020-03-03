@@ -22,19 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * DummyNWInterface.h
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
-
-#ifndef SRC_NETWORK_DUMMYNWINTERFACE_H_
-#define SRC_NETWORK_DUMMYNWINTERFACE_H_
+#pragma once
 
 #include <stdint.h>
 #include "NetworkInterface.h"
-#include "../islands/Islands.h"
+#include "Islands.h"
 namespace network {
 
 /* Dummy interface should have islands.h */
@@ -63,4 +55,3 @@ public:
 
 } /* namespace network */
 
-#endif /* SRC_NETWORK_DUMMYNWINTERFACE_H_ */

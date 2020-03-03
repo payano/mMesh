@@ -29,12 +29,8 @@ SOFTWARE.
 
 // linux randomizer
 #include <stdlib.h>
-#include <time.h>
-
-#include <thread>
 
 #include <stdio.h> // REMOVE
-#include <unistd.h>
 
 static constexpr int FIND_PARENT_TIMEOUT_MS(1000);
 static constexpr int NEIGHBOURS_SZ(5);
@@ -227,15 +223,6 @@ public:
 	/* this is our simple routing algorithm */
 	static const struct net_address *getRouteAddress(const struct networkData *nwd, const struct net_address *dst){
 		/* Check nb's */
-//		printf("t:%zu, MAC: \n", std::this_thread::get_id());
-//		NetHelper::printf_address(&nwd->mac);
-//		printf("t:%zu, DST: \n", std::this_thread::get_id());
-//		NetHelper::printf_address(dst);
-//		for(int i = 0; i < nwd->pairedChildren; ++i){
-//		printf("t:%zu, Child: \n", std::this_thread::get_id());
-//		NetHelper::printf_address(&nwd->nbs[i].mac);
-//		}
-
 		if(1 == nwd->mac.master) {
 			for(int i = 0 ; i < NEIGHBOURS_SZ; ++i){
 				if(nwd->nbs[i].mac.nbs[0].net == dst->nbs[0].net) {
@@ -243,24 +230,15 @@ public:
 				}
 			}
 		}
-//		printf("t:%zu, NOT MASTER\n", std::this_thread::get_id());
-//		printf("t:%zu, PAIRED CHILDS: %d\n", std::this_thread::get_id(), nwd->pairedChildren);
 		for(int i = 0; i < nwd->pairedChildren; ++i) {
-//			printf("t:%zu ,CHILD: ", std::this_thread::get_id());
-//			NetHelper::printf_address(&nwd->nbs[i].mac);
 			bool childOf = NetHelper::isChildOf(&nwd->nbs[i].mac, dst);
-//			printf("t:%zu, Is child of: %d\n", std::this_thread::get_id(), childOf);
 			if(true == childOf) {
-//				printf("t:%zu, 1RET CHILD\n", std::this_thread::get_id());
 				return &nwd->nbs[i].mac;
 			}
-			if(true == NetHelper::compare_net_address(dst, &nwd->nbs[i].mac))
-			{
-//				printf("t:%zu, 2RET CHILD\n", std::this_thread::get_id());
+			if(true == NetHelper::compare_net_address(dst, &nwd->nbs[i].mac)){
 				return dst;
 			}
 		}
-//		printf("t:%zu, RET PARENT\n", std::this_thread::get_id());
 		return &nwd->parent;
 	}
 
@@ -293,7 +271,6 @@ public:
 	}
 
 	static int queue_get(struct networkData *nwd, union mesh_internal_msg **msg){
-//		printf("queue_get ptr: %p\n",);
 		*msg = nwd->queuedmsgs[nwd->buffer_count-1];
 		nwd->buffer_count--;
 		return 0;

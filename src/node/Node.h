@@ -22,25 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * Node.h
- *
- *  Created on: Feb 13, 2020
- *      Author: evsejho
- */
-
 /* A node is a "stm32" controller with radio.
  * This is just for testing purposes
  */
 
-#ifndef SRC_NODE_H_
-#define SRC_NODE_H_
+#pragma once
 
 
-#include "../mesh/Mesh.h"
-#include "../islands/Islands.h"
-#include "../DataTypes.h"
-#include "../network/DummyNWInterface.h"
+#include "Mesh.h"
+#include "Islands.h"
+#include "DataTypes.h"
+#include "DummyNWInterface.h"
 #include <stdio.h>
 #include <thread>         // std::thread
 
@@ -84,4 +76,3 @@ public:
 
 } /* namespace node */
 
-#endif /* SRC_NODE_H_ */

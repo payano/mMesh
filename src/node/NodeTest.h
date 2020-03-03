@@ -22,18 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * NodeTest.h
- *
- *  Created on: Feb 13, 2020
- *      Author: evsejho
- */
+#pragma once
 
-#ifndef SRC_NODETEST_H_
-#define SRC_NODETEST_H_
 #include "gtest/gtest.h"
-#include "../network/DummyNWInterface.h"
-#include "../islands/Islands.h"
+#include "DummyNWInterface.h"
+#include "Islands.h"
 #include "Node.h"
 
 constexpr int SLAVE_TO_MASTER(5);
@@ -358,4 +351,3 @@ TEST_F(NodeTest,Associate2Islands){
 
 
 }
-#endif /* SRC_NODETEST_H_ */

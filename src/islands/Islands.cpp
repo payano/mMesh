@@ -22,17 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * Islands.cpp
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
-
-#include "Islands.h"
-#include "../node/Node.h"
 #include <list>
-#include "../mesh/Mesh.h"
+#include "Islands.h"
+#include "Node.h"
+#include "Mesh.h"
 namespace island {
 
 Island::Island() :

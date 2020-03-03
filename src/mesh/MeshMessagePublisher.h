@@ -22,15 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * MeshMessagePublisher.h
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
-
-#ifndef SRC_MESH_MESHMESSAGEPUBLISHER_H_
-#define SRC_MESH_MESHMESSAGEPUBLISHER_H_
+#pragma once
 
 namespace mesh {
 class MeshMessageSubscriber;
@@ -48,4 +40,3 @@ public:
 
 } /* namespace mesh */
 
-#endif /* SRC_MESH_MESHMESSAGEPUBLISHER_H_ */

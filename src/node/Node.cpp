@@ -31,7 +31,8 @@ SOFTWARE.
 
 #include "Node.h"
 #include <string.h>
-
+#include <stdio.h> // REMOVE
+#include <unistd.h>
 namespace node {
 
 int Node::nodeId = 0;
@@ -40,7 +41,6 @@ Node::Node(network::NetworkInterface *nw) : nw(nw), mThread(nullptr),
 		mThreadRunning(false) {
 	// Might want to use threads to really simulate a "stm32" or "Arduino" controller.
 	mesh = new mesh::Mesh(nw);
-	mesh->init();
 	char name[10] = {0,};
 	memset(name, '\0', 10);
 	snprintf(name, 10, "Node%d",this->nodeId);

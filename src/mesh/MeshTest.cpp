@@ -21,25 +21,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
-/*
- * MeshTest.cpp
- *
- *  Created on: Feb 13, 2020
- *      Author: evsejho
- */
-
-//#include "MeshTest.h"
-//
-//namespace mesh {
-
-//MeshTest::MeshTest() {
-//	// TODO Auto-generated constructor stub
-//
-//}
-//
-//MeshTest::~MeshTest() {
-//	// TODO Auto-generated destructor stub
-//}
-
-//} /* namespace mesh */

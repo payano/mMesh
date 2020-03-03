@@ -22,17 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * NetworkInterfaceSubscriber.h
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
+#pragma once
 
-#ifndef SRC_NETWORK_NETWORKINTERFACESUBSCRIBER_H_
-#define SRC_NETWORK_NETWORKINTERFACESUBSCRIBER_H_
-
-#include "../DataTypes.h"
+union mesh_internal_msg;
 
 namespace network {
 
@@ -42,7 +34,5 @@ public:
 	virtual ~NetworkInterfaceSubscriber(){}
 };
 
-
 } /* namespace network */
 
-#endif /* SRC_NETWORK_NETWORKINTERFACESUBSCRIBER_H_ */

@@ -22,19 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * NetworkInterface.h
- *
- *  Created on: Feb 19, 2020
- *      Author: evsejho
- */
-
-#ifndef SRC_NETWORK_NETWORKINTERFACE_H_
-#define SRC_NETWORK_NETWORKINTERFACE_H_
+#pragma once
 
 #include <stdint.h>
 #include "NetworkInterfacePublisher.h"
-#include "../DataTypes.h"
+#include "DataTypes.h"
 namespace network {
 
 /*! \brief Base class for Network Interfaces.
@@ -57,4 +49,3 @@ public:
 
 } /* namespace network */
 
-#endif /* SRC_NETWORK_NETWORKINTERFACE_H_ */

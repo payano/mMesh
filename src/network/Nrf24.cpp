@@ -21,25 +21,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
-///*
-// * Nrf24.cpp
-// *
-// *  Created on: Feb 19, 2020
-// *      Author: evsejho
-// */
-//
-//#include "Nrf24.h"
-//
-//namespace network {
-//
-//Nrf24::Nrf24() {
-//	// TODO Auto-generated constructor stub
-//
-//}
-//
-//Nrf24::~Nrf24() {
-//	// TODO Auto-generated destructor stub
-//}
-//
-//} /* namespace network */

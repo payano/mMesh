@@ -22,19 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * MeshTest.h
- *
- *  Created on: Feb 13, 2020
- *      Author: evsejho
- */
+#pragma once
 
-#ifndef SRC_MESHTEST_H_
-#define SRC_MESHTEST_H_
 #include "gtest/gtest.h"
 #include "Mesh.h"
-#include "../network/Nrf24.h"
-#include "../network/NetworkInterface.h"
+#include "Nrf24.h"
+#include "NetworkInterface.h"
 
 namespace mesh {
 
@@ -61,4 +54,3 @@ TEST_F(MeshTest,Start){
 } /* namespace mesh */
 
 
-#endif /* SRC_MESHTEST_H_ */
