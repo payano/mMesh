@@ -63,11 +63,18 @@ enum STARTING_STATE {
 
 enum STARTED_STATE {
 	STARTED_IDLE,
+	STARTED_SEEKING_NEIGHBOURS,
+	STARTED_CHOOSING_NEIGHBOURS,
+	STARTED_PING_PARENT,
+	STARTED_PING_WAITING_FOR_PARENT,
+	STARTED_PING_NEIGHBOURS,
+	STARTED_PING_WAITING_FOR_NEIGHBOURS,
 };
 
 struct stateData {
 	enum STATE topState;
 	enum STARTING_STATE starting_state;
+	enum STARTED_STATE started_state;
 };
 
 Mesh::Mesh(NetworkInterface *nw) : nw(nw) {
@@ -304,6 +311,7 @@ void Mesh::sm_starting_waiting_for_master()
 	}
 
 	statedata->topState = STATE::STATE_STARTED;
+	statedata->started_state = STARTED_STATE::STARTED_IDLE;
 }
 
 void Mesh::sm_starting()
@@ -331,8 +339,59 @@ void Mesh::sm_starting()
 	}
 }
 
+void Mesh::sm_started_idle()
+{
+
+}
+void Mesh::sm_started_seeking_neighbours()
+{
+
+}
+void Mesh::sm_started_choosing_neighbours()
+{
+
+}
+void Mesh::sm_started_ping_parent()
+{
+
+}
+void Mesh::sm_started_ping_waiting_for_parent()
+{
+
+}
+void Mesh::sm_started_ping_neighbours()
+{
+
+}
+void Mesh::sm_started_ping_waiting_for_neighbours()
+{
+
+}
+
 void Mesh::sm_started() {
-	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	switch(statedata->started_state){
+	case STARTED_IDLE:
+		sm_started_idle();
+		break;
+	case STARTED_SEEKING_NEIGHBOURS:
+		sm_started_seeking_neighbours();
+		break;
+	case STARTED_CHOOSING_NEIGHBOURS:
+		sm_started_choosing_neighbours();
+		break;
+	case STARTED_PING_PARENT:
+		sm_started_ping_parent();
+		break;
+	case STARTED_PING_WAITING_FOR_PARENT:
+		sm_started_ping_waiting_for_parent();
+		break;
+	case STARTED_PING_NEIGHBOURS:
+		sm_started_ping_neighbours();
+		break;
+	case STARTED_PING_WAITING_FOR_NEIGHBOURS:
+		sm_started_ping_waiting_for_neighbours();
+		break;
+	}
 }
 
 int Mesh::getSubnetToChild(struct net_address *address)

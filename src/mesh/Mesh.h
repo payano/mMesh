@@ -96,9 +96,16 @@ private:
 	void sm_starting_waiting_for_parent();
 	void sm_starting_register_to_master();
 	void sm_starting_waiting_for_master();
-	void sm_starting();
+	void sm_starting(); /* Main starting */
 
-	void sm_started();
+	void sm_started_idle();
+	void sm_started_seeking_neighbours();
+	void sm_started_choosing_neighbours();
+	void sm_started_ping_parent();
+	void sm_started_ping_waiting_for_parent();
+	void sm_started_ping_neighbours();
+	void sm_started_ping_waiting_for_neighbours();
+	void sm_started(); /* Main started */
 
 	void sm_stopping() {}
 	void sm_stopped() {}
