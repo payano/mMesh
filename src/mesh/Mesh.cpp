@@ -26,12 +26,12 @@ SOFTWARE.
 #include "NetworkInterface.h"
 #include "NetworkInterfacePublisher.h"
 #include "DataTypes.h"
-
-
+#include "LazyAlgorithm.h"
 /* should be removed later */
 //#include <stdio.h>
-//#include <iostream>
 #include <unistd.h>
+#include <chrono>
+//#include <iostream>
 
 namespace mesh {
 
@@ -68,15 +68,15 @@ enum STARTED_STATE {
 struct stateData {
 	enum STATE topState;
 	enum STARTING_STATE starting_state;
-
 };
-
 
 Mesh::Mesh(NetworkInterface *nw) : nw(nw) {
 	network = new networkData;
 	NetHelper::init_networkData(network);
 	nw->registerSubscriber(this);
 	statedata = new stateData;
+	algorithm = new NetAlgorithm::LazyAlgorithm();
+
 	initStateMachine();
 	timerStarted = false;
 	timerDone = false;
@@ -104,12 +104,14 @@ int Mesh::run() {
 
 void Mesh::setName(char *name)
 {
-	char *thisName = this->name;
-	while(*name != '\0') {
+	char *thisName = &this->name[0];
+	char *lastThisName = &(this->name[MAX_NAME-1]);
+	while(*name != '\0' && thisName != lastThisName) {
 		*thisName = *name;
 		thisName++;
 		name++;
 	}
+	*lastThisName = '\0';
 }
 
 void Mesh::getParent(struct net_address *addr){
@@ -128,20 +130,18 @@ char *Mesh::getName() { return name;}
 
 void Mesh::timerCallback(int ms)
 {
+	timerDone = false;
 	timerStarted = true;
-	usleep(ms*1000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	timerDone = true;
 	timerStarted = false;
 }
-
 
 void Mesh::armTimer(int ms)
 {
 	/* Only one at the time */
 	if(timerStarted) return;
-
 	/* this should access a hw timer */
-	timerDone = false;
 	mThread = new std::thread(&Mesh::timerCallback, this, ms);
 }
 
@@ -154,6 +154,7 @@ void Mesh::stateMachine()
 		sm_init();
 		break;
 	case STATE_MASTER:
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		break;
 	case STATE_STARTING:
 		sm_starting();
@@ -205,27 +206,21 @@ void Mesh::sm_starting_choosing_parent() {
 		statedata->starting_state = STARTING_STATE::STARTING_SEEKING_PARENT;
 		return;
 	}
-	// Choose the right one to associate with.
-	// We take the first one and discard the rest.
-	union mesh_internal_msg *queue_msg;
-	NetHelper::queue_get(network, &queue_msg);
 
-	if(MSGNO::BROADCAST_ASSOCIATE_RSP != queue_msg->header.msgno){
-		// This is error
-		printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
+	int ret;
+	struct net_address parent;
+	ret = algorithm->choose_parent_from_list(network, &parent);
+
+	if(ret) {
 		statedata->starting_state = STARTING_STATE::STARTING_SEEKING_PARENT;
-		delete queue_msg;
 		return;
 	}
-
-	NetHelper::queue_clear(network);
-	struct broadcast_associate_rsp *queue_rsp = &queue_msg->associate_rsp;
 
 	union mesh_internal_msg rsp;
 	rsp.assignment_req.header.msgno = MSGNO::NETWORK_ASSIGNMENT_REQ;
 	NetHelper::copy_net_address(&rsp.associate_req.from_addr, &network->mac);
-	nw->sendto(&queue_rsp->parent_address, &rsp);
-	delete queue_msg;
+
+	nw->sendto(&parent, &rsp);
 
 	// Done
 	statedata->starting_state = STARTING_STATE::STARTING_REGISTER_TO_PARENT;
@@ -300,6 +295,7 @@ void Mesh::sm_starting_waiting_for_master()
 
 	struct register_to_master_rsp *msg = &queue_msg->reg_master_rsp;
 	network->registeredToMaster = msg->status == STATUS::OK ? true : false;
+
 	delete queue_msg;
 
 	if(!network->registeredToMaster) {
@@ -335,7 +331,9 @@ void Mesh::sm_starting()
 	}
 }
 
-void Mesh::sm_started() {}
+void Mesh::sm_started() {
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+}
 
 int Mesh::getSubnetToChild(struct net_address *address)
 {
@@ -392,10 +390,7 @@ void Mesh::network_recv(union mesh_internal_msg *msg) {
 }
 
 void Mesh::handle_associate_rsp(union mesh_internal_msg *msg) {
-	/* Okay, someone responded. There is a network to be
-	 * associated with, ask the responder for a address.
-	 */
-	NetHelper::queue_add(network, msg);
+	algorithm->associate_rsp_add_parent_to_list(network, msg);
 	return;
 }
 
@@ -437,13 +432,15 @@ void Mesh::handle_register_to_master_req(union mesh_internal_msg *msg){
 
 	// Drop packet. not valid anymore.
 	msg->header.hop_count++;
-	if(msg->header.hop_count >= MAX_HOPS) return;
+	if(msg->header.hop_count >= MAX_HOPS) {
+		return;
+	}
 
 	// I'm not master, pass it along
 	// Here we should do routing algorithm
 	if(!network->mac.master){
-		dst = NetHelper::getRouteAddress(network, &MASTER);
-		nw->sendto(&network->parent, (mesh_internal_msg*)msg);
+		dst = algorithm->getRouteForPacket(network, &MASTER);
+		nw->sendto(&network->parent, msg);
 		return;
 	}
 
@@ -457,7 +454,7 @@ void Mesh::handle_register_to_master_req(union mesh_internal_msg *msg){
 	NetHelper::copy_net_address(&rsp.reg_master_rsp.destination,
 	                            &msg->reg_master_req.host_addr);
 
-	dst = NetHelper::getRouteAddress(network,
+	dst = algorithm->getRouteForPacket(network,
 	                                  &rsp.reg_master_rsp.destination);
 
 	nw->sendto(dst, &rsp);
@@ -474,19 +471,18 @@ void Mesh::handle_register_to_master_rsp(union mesh_internal_msg *msg){
 	// Here we should do routing algorithm
 	if(!NetHelper::compare_net_address(&network->mac,
 	                                   &msg->reg_master_rsp.destination)){
-		dst = NetHelper::getRouteAddress(
+		dst = algorithm->getRouteForPacket(
 				network, &msg->reg_master_rsp.destination);
 		nw->sendto(dst, (mesh_internal_msg*)msg);
 		return;
 	}
-
 	NetHelper::queue_add(network, msg);
 }
-
 
 void Mesh::doAssociateReq(){
 	union mesh_internal_msg msg;
 	msg.associate_req.header.msgno = MSGNO::BROADCAST_ASSOCIATE_REQ;
+	msg.associate_req.header.hop_count = 0;
 	NetHelper::copy_net_address(&msg.associate_req.from_addr, &network->mac);
 	nw->sendto(&BROADCAST, &msg);
 }
@@ -494,11 +490,11 @@ void Mesh::doAssociateReq(){
 void Mesh::doRegisterReq(){
 	union mesh_internal_msg msg;
 	msg.associate_req.header.msgno = MSGNO::REGISTER_TO_MASTER_REQ;
+	msg.associate_req.header.hop_count = 0;
 	NetHelper::copy_net_address(&msg.reg_master_req.host_addr, &network->mac);
 	nw->sendto(&network->parent, &msg);
 }
 
 void Mesh::setPaired(bool val){network->mPaired = val;}
-
 
 } /* namespace mesh */

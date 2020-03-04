@@ -28,11 +28,13 @@ SOFTWARE.
 #include "DummyNWInterface.h"
 #include "Islands.h"
 #include "Node.h"
+#include <chrono>
 
 constexpr int SLAVE_TO_MASTER(5);
 constexpr int SLAVE_COUNT(4);
 constexpr int ISLANDS(10);
 constexpr int STARTUP_TIME(1000000);
+constexpr int STARTUP_TIME_MS(1000);
 
 namespace node {
 
@@ -200,7 +202,7 @@ TEST_F(NodeTest,Assign5Nodes2Master){
 
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->startThread();}
 
-	usleep(STARTUP_TIME);
+	std::this_thread::sleep_for(std::chrono::milliseconds(STARTUP_TIME_MS));
 
 	master->stopThread();
 
@@ -240,7 +242,7 @@ TEST_F(NodeTest,Associate2Islands){
 		slave_to_0_0_0_0_0_0_0_0_0[i]->startThread();
 	}
 
-	usleep(STARTUP_TIME*3);
+	std::this_thread::sleep_for(std::chrono::milliseconds(3*STARTUP_TIME_MS));
 
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->stopThread();}
 	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
@@ -255,6 +257,11 @@ TEST_F(NodeTest,Associate2Islands){
 		slave_to_0_0_0_0_0_0_0_0_0[i]->stopThread();
 	}
 
+	printf("\nIslands statistics (BC = Broadcast msg): \n");
+	for(int i = 0; i < ISLANDS ; ++i){
+		printf("Island[%d]\n", i);
+		islands[i].printStatistics();
+	}
 
 	master->getAddr(&addr);
 	printf("Master: ");
@@ -339,12 +346,6 @@ TEST_F(NodeTest,Associate2Islands){
 		NetHelper::printf_address(&addr);
 		ASSERT_TRUE(slave_to_0_0_0_0_0_0_0_0[i]->getPaired());
 		ASSERT_TRUE(slave_to_0_0_0_0_0_0_0_0[i]->getRegisteredToMaster());
-	}
-
-	printf("\nIslands statistics (BC = Broadcast msg): \n");
-	for(int i = 0; i < ISLANDS ; ++i){
-		printf("Island[%d]\n", i);
-		islands[i].printStatistics();
 	}
 
 }

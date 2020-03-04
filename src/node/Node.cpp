@@ -22,17 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/*
- * Node.cpp
- *
- *  Created on: Feb 13, 2020
- *      Author: evsejho
- */
 
 #include "Node.h"
 #include <string.h>
 #include <stdio.h> // REMOVE
 #include <unistd.h>
+#include <chrono>
 namespace node {
 
 int Node::nodeId = 0;
@@ -88,7 +83,8 @@ void Node::threadMain(){
 
 	while(mThreadRunning) {
 		mesh->run();
-		usleep(1000); // 1ms;
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
 	}
 }
 

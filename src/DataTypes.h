@@ -220,38 +220,6 @@ struct networkData {
 
 class NetHelper{
 public:
-	/* this is our simple routing algorithm */
-	static const struct net_address *getRouteAddress(const struct networkData *nwd, const struct net_address *dst){
-		/* Check nb's */
-		if(1 == nwd->mac.master) {
-			for(int i = 0 ; i < NEIGHBOURS_SZ; ++i){
-				if(nwd->nbs[i].mac.nbs[0].net == dst->nbs[0].net) {
-					return &nwd->nbs[i].mac;
-				}
-			}
-		}
-		for(int i = 0; i < nwd->pairedChildren; ++i) {
-			bool childOf = NetHelper::isChildOf(&nwd->nbs[i].mac, dst);
-			if(true == childOf) {
-				return &nwd->nbs[i].mac;
-			}
-			if(true == NetHelper::compare_net_address(dst, &nwd->nbs[i].mac)){
-				return dst;
-			}
-		}
-		return &nwd->parent;
-	}
-
-	static bool isChildOf(const struct net_address *parent, const struct net_address *child){
-		if(parent->master) return true; // all is childs to master
-
-		for(int i = 0; i < NET_COUNT; ++i) {
-			if(parent->nbs[i].net == child->nbs[i].net) continue;
-			if(parent->nbs[i].net == 0x0) {return true;}
-			break;
-		}
-		return false;
-	}
 	static int queue_sz(struct networkData *nwd) { return nwd->buffer_count; }
 	static void queue_clear(struct networkData *nwd){
 		for(int i = nwd->buffer_count-1; i >= 0; --i){
@@ -260,7 +228,8 @@ public:
 		nwd->buffer_count = 0;
 	}
 
-	static int queue_add(struct networkData *nwd, union mesh_internal_msg *msg){
+	static int queue_add(struct networkData *nwd,
+	                     union mesh_internal_msg *msg){
 		if(nwd->buffer_count >= MSG_BUFFER) return -1;
 		union mesh_internal_msg *add_msg = new mesh_internal_msg;
 
@@ -405,12 +374,12 @@ public:
 	}
 private:
 	static int copy_internal_msg(union mesh_internal_msg *to,
-	                             union mesh_internal_msg *from) {
+	                             const union mesh_internal_msg *from) {
 		int sz = sizeof(*to);
 		void *void_to = static_cast<void*>(to);
-		void *void_from = static_cast<void*>(from);
+		const void *void_from = static_cast<const void*>(from);
 		uint8_t *uint8_to = static_cast<uint8_t *>(void_to);
-		uint8_t *uint8_from = static_cast<uint8_t *>(void_from);
+		const uint8_t *uint8_from = static_cast<const uint8_t *>(void_from);
 
 		for(int i = 0 ; i < sz ; ++i){
 			uint8_to[i] = uint8_from[i];

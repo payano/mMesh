@@ -68,7 +68,7 @@ public:
 		printf("  nw_ass_req    : %03d, ", m_network_assignment_req);
 		printf("nw_ass_rsp    : %03d\n", m_network_assignment_rsp);
 		printf("  reg2master_req: %03d, ", m_register_to_master_req);
-		printf("reg2master_req: %03d\n", m_register_to_master_rsp);
+		printf("reg2master_rsp: %03d\n", m_register_to_master_rsp);
 		printf("  msg_req       : %03d, ", m_message_req);
 		printf("msg_rsp       : %03d\n", m_message_rsp);
 	}

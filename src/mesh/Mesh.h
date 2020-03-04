@@ -28,12 +28,14 @@ SOFTWARE.
 #include "NetworkInterfaceSubscriber.h"
 #include "MeshMessagePublisher.h"
 #include <stdint.h>
-
-// Remove thread later
 #include <thread>         // std::thread
 
 namespace network {
 class NetworkInterface;
+};
+
+namespace NetAlgorithm {
+class NetAlgorithmInterface;
 };
 
 union mesh_internal_msg;
@@ -50,6 +52,7 @@ class Mesh : public MeshMessagePublisher, NetworkInterfaceSubscriber {
 private:
 	struct networkData *network;  /*!< Detailed description after the member */
 	NetworkInterface *nw;
+	NetAlgorithm::NetAlgorithmInterface *algorithm;
 	char name[MAX_NAME];
 	uint8_t childs[CHILD_COUNT];
 	bool mSetMaster;
