@@ -99,6 +99,8 @@ private:
 	void sm_starting(); /* Main starting */
 
 	void sm_started_idle();
+	void sm_started_seeking_parent();
+	void sm_started_choosing_parent();
 	void sm_started_seeking_neighbours();
 	void sm_started_choosing_neighbours();
 	void sm_started_ping_parent();
@@ -122,6 +124,14 @@ private:
 	void handle_register_to_master_req(union mesh_internal_msg *msg);
 	void handle_register_to_master_rsp(union mesh_internal_msg *msg);
 	void setPaired(bool val);
+
+	/* */
+	int timer_counter_ping_nb;
+	int timer_counter_ping_parent;
+	int timer_counter_bc_nb;
+	int timer_counter_bc_parent;
+	void decrease_timer_counters();
+	void init_timer_counters();
 
 	/* Mesh related */
 	void doAssociateReq();

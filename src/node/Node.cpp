@@ -68,9 +68,9 @@ void Node::addIsland(island::Island *island)
 }
 
 Node::~Node() {
-	if(mThread != nullptr)
-		stopThread();
-	delete mesh;
+	if(mThread != nullptr) stopThread();
+	if(nullptr != mesh) delete mesh;
+	if(nullptr != nw) delete nw;
 	nodeId--;
 
 }

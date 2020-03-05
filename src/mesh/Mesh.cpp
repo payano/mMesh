@@ -63,6 +63,8 @@ enum STARTING_STATE {
 
 enum STARTED_STATE {
 	STARTED_IDLE,
+	STARTED_SEEKING_PARENT,
+	STARTED_CHOOSING_PARENT,
 	STARTED_SEEKING_NEIGHBOURS,
 	STARTED_CHOOSING_NEIGHBOURS,
 	STARTED_PING_PARENT,
@@ -77,6 +79,11 @@ struct stateData {
 	enum STARTED_STATE started_state;
 };
 
+static constexpr int TIMER_COUNTER_PING_NB(6);
+static constexpr int TIMER_COUNTER_PING_PARENT(6);
+static constexpr int TIMER_COUNTER_BC_NB(10);
+static constexpr int TIMER_COUNTER_BC_PARENT(10);
+
 Mesh::Mesh(NetworkInterface *nw) : nw(nw) {
 	network = new networkData;
 	NetHelper::init_networkData(network);
@@ -88,12 +95,25 @@ Mesh::Mesh(NetworkInterface *nw) : nw(nw) {
 	timerStarted = false;
 	timerDone = false;
 	mSetMaster = false;
+
+	timer_counter_ping_nb = 0;
+	timer_counter_ping_parent = 0;
+	timer_counter_bc_nb = 0;
+	timer_counter_bc_parent = 0;
+
+	mThread = nullptr;
 	for(int i = 0 ; i < MAX_NAME; ++i) {name[i] = 0;}
 	for(int i = 0 ; i < CHILD_COUNT; ++i){childs[i] = 0x0;}
 }
 Mesh::~Mesh() {
-	delete nw;
-	delete statedata;
+	delete network;
+	delete algorithm;
+	if(nullptr != statedata) delete statedata;
+	if(nullptr != mThread) {
+		mThread->join();
+		delete mThread;
+	}
+
 }
 
 void Mesh::setMaster() {
@@ -138,7 +158,6 @@ char *Mesh::getName() { return name;}
 void Mesh::timerCallback(int ms)
 {
 	timerDone = false;
-	timerStarted = true;
 	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	timerDone = true;
 	timerStarted = false;
@@ -148,7 +167,13 @@ void Mesh::armTimer(int ms)
 {
 	/* Only one at the time */
 	if(timerStarted) return;
+	if(nullptr != mThread) {
+		mThread->join();
+		delete mThread;
+		mThread = nullptr;
+	}
 	/* this should access a hw timer */
+	timerStarted = true;
 	mThread = new std::thread(&Mesh::timerCallback, this, ms);
 }
 
@@ -312,6 +337,7 @@ void Mesh::sm_starting_waiting_for_master()
 
 	statedata->topState = STATE::STATE_STARTED;
 	statedata->started_state = STARTED_STATE::STARTED_IDLE;
+	init_timer_counters();
 }
 
 void Mesh::sm_starting()
@@ -339,33 +365,92 @@ void Mesh::sm_starting()
 	}
 }
 
+void Mesh::init_timer_counters()
+{
+	timer_counter_ping_nb = TIMER_COUNTER_PING_NB;
+	timer_counter_ping_parent  = TIMER_COUNTER_PING_PARENT;
+	timer_counter_bc_nb = TIMER_COUNTER_BC_NB;
+	timer_counter_bc_parent = TIMER_COUNTER_BC_PARENT;
+}
+
+void Mesh::decrease_timer_counters()
+{
+	if(timer_counter_ping_nb > 0)     --timer_counter_ping_nb;
+	if(timer_counter_ping_parent > 0) --timer_counter_ping_parent;
+	if(timer_counter_bc_nb > 0)       --timer_counter_bc_nb;
+	if(timer_counter_bc_parent > 0)   --timer_counter_bc_parent;
+}
+
 void Mesh::sm_started_idle()
 {
+	if(timerStarted) return;
 
+	armTimer(10000); // 10sec
+
+	// Prio
+	if(0 == timer_counter_ping_parent) {
+		statedata->started_state = STARTED_STATE::STARTED_PING_PARENT;
+		timer_counter_ping_parent = TIMER_COUNTER_PING_PARENT;
+	}else if(0 == timer_counter_ping_nb) {
+		statedata->started_state = STARTED_STATE::STARTED_PING_NEIGHBOURS;
+		timer_counter_ping_nb = TIMER_COUNTER_PING_NB;
+	}else if(0 == timer_counter_bc_parent) {
+		statedata->started_state = STARTED_STATE::STARTED_SEEKING_PARENT;
+		timer_counter_bc_parent = TIMER_COUNTER_BC_PARENT;
+	}else if(0 == timer_counter_bc_nb) {
+		statedata->started_state = STARTED_STATE::STARTED_SEEKING_NEIGHBOURS;
+		timer_counter_bc_nb = TIMER_COUNTER_BC_NB;
+	}
+	decrease_timer_counters();
 }
+
+void Mesh::sm_started_seeking_parent()
+{
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_CHOOSING_PARENT;
+}
+
+void Mesh::sm_started_choosing_parent()
+{
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_IDLE;
+}
+
 void Mesh::sm_started_seeking_neighbours()
 {
-
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_CHOOSING_NEIGHBOURS;
 }
+
 void Mesh::sm_started_choosing_neighbours()
 {
-
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_IDLE;
 }
+
 void Mesh::sm_started_ping_parent()
 {
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_PING_WAITING_FOR_PARENT;
 
 }
+
 void Mesh::sm_started_ping_waiting_for_parent()
 {
-
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_IDLE;
 }
+
 void Mesh::sm_started_ping_neighbours()
 {
-
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_PING_WAITING_FOR_NEIGHBOURS;
 }
+
 void Mesh::sm_started_ping_waiting_for_neighbours()
 {
-
+	printf("%s: %s\n", getName(), __FUNCTION__);
+	statedata->started_state = STARTED_STATE::STARTED_IDLE;
 }
 
 void Mesh::sm_started() {
@@ -390,6 +475,12 @@ void Mesh::sm_started() {
 		break;
 	case STARTED_PING_WAITING_FOR_NEIGHBOURS:
 		sm_started_ping_waiting_for_neighbours();
+		break;
+	case STARTED_SEEKING_PARENT:
+		sm_started_seeking_parent();
+		break;
+	case STARTED_CHOOSING_PARENT:
+		sm_started_choosing_parent();
 		break;
 	}
 }
