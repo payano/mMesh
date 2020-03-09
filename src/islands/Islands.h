@@ -51,6 +51,12 @@ class Island {
 	int m_register_to_master_rsp;
 	int m_message_req;
 	int m_message_rsp;
+	int m_ping_parent_req;
+	int m_ping_parent_rsp;
+	int m_disconnect_child_req;
+	int m_disconnect_child_rsp;
+
+
 public:
 	Island();
 	virtual ~Island();
@@ -61,16 +67,20 @@ public:
 	void reset();
 	void printStatistics() {
 		// dont print invalid.
-		printf("  bc_ass_req    : %03d, ", m_broadcast_associate_req);
-		printf("bc_ass_rsp    : %03d\n", m_broadcast_associate_rsp);
-		printf("  bc_nb_req     : %03d, ", m_broadcast_neighbour_req);
-		printf("bc_nb_rsp     : %03d\n", m_broadcast_neighbour_rsp);
-		printf("  nw_ass_req    : %03d, ", m_network_assignment_req);
-		printf("nw_ass_rsp    : %03d\n", m_network_assignment_rsp);
-		printf("  reg2master_req: %03d, ", m_register_to_master_req);
-		printf("reg2master_rsp: %03d\n", m_register_to_master_rsp);
-		printf("  msg_req       : %03d, ", m_message_req);
-		printf("msg_rsp       : %03d\n", m_message_rsp);
+		printf("  bc_ass_req          : %03d, ", m_broadcast_associate_req);
+		printf("bc_ass_rsp          : %03d\n", m_broadcast_associate_rsp);
+		printf("  bc_nb_req           : %03d, ", m_broadcast_neighbour_req);
+		printf("bc_nb_rsp           : %03d\n", m_broadcast_neighbour_rsp);
+		printf("  nw_ass_req          : %03d, ", m_network_assignment_req);
+		printf("nw_ass_rsp          : %03d\n", m_network_assignment_rsp);
+		printf("  reg2master_req      : %03d, ", m_register_to_master_req);
+		printf("reg2master_rsp      : %03d\n", m_register_to_master_rsp);
+		printf("  ping_parent_req     : %03d, ", m_register_to_master_req);
+		printf("ping_parent_rsp     : %03d\n", m_register_to_master_rsp);
+		printf("  disconnect_child_req: %03d, ", m_disconnect_child_req);
+		printf("disconnect_child_rsp: %03d\n", m_disconnect_child_rsp);
+		printf("  msg_req             : %03d, ", m_message_req);
+		printf("msg_rsp             : %03d\n", m_message_rsp);
 	}
 };
 

@@ -41,22 +41,23 @@ const struct net_address *LazyAlgorithm::getRouteForPacket(const struct networkD
 {
 	/* Check nb's */
 	if(1 == nw->mac.master) {
-		for(int i = 0 ; i < NEIGHBOURS_SZ; ++i){
-			if(nw->nbs[i].mac.nbs[0].net == to->nbs[0].net) {
-				return &nw->nbs[i].mac;
+		for(int i = 0 ; i < CHILDREN_SZ; ++i){
+			if(nw->childs[i].mac.nbs[0].net == to->nbs[0].net) {
+				return &nw->childs[i].mac;
 			}
 		}
 	}
+
 	for(int i = 0; i < nw->pairedChildren; ++i) {
-		bool childOf = isChildOf(&nw->nbs[i].mac, to);
+		bool childOf = NetHelper::isChildOf(&nw->childs[i].mac, to);
 		if(true == childOf) {
-			return &nw->nbs[i].mac;
+			return &nw->childs[i].mac;
 		}
-		if(true == NetHelper::compare_net_address(to, &nw->nbs[i].mac)){
+		if(true == NetHelper::compare_net_address(to, &nw->childs[i].mac)){
 			return to;
 		}
 	}
-	return &nw->parent;
+	return &nw->parent.mac;
 }
 
 int LazyAlgorithm::associate_rsp_add_parent_to_list(struct networkData *nw,
@@ -70,34 +71,19 @@ int LazyAlgorithm::choose_parent_from_list(struct networkData *nw,
 {
 	// Choose the right one to associate with.
 	// We take the first one and discard the rest.
-	union mesh_internal_msg *queue_msg;
+	union mesh_internal_msg queue_msg;
 	NetHelper::queue_get(nw, &queue_msg);
 	NetHelper::queue_clear(nw);
 
-	if(MSGNO::BROADCAST_ASSOCIATE_RSP != queue_msg->header.msgno){
+	if(MSGNO::BROADCAST_ASSOCIATE_RSP != queue_msg.header.msgno){
 		// This is error
-		printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
-		delete queue_msg;
 		return -1;
 	}
 
-	NetHelper::copy_net_address(parent, &queue_msg->associate_rsp.parent_address);
-	delete queue_msg;
+	NetHelper::copy_net_address(parent, &queue_msg.associate_rsp.parent_address);
 
 	return 0;
 	}
 
-bool LazyAlgorithm::isChildOf(const struct net_address *parent,
-               const struct net_address *child)
-{
-	if(parent->master) return true; // all is childs to master
-
-	for(int i = 0; i < NET_COUNT; ++i) {
-		if(parent->nbs[i].net == child->nbs[i].net) continue;
-		if(parent->nbs[i].net == 0x0) {return true;}
-		break;
-	}
-	return false;
-}
 } /* namespace NetAlgorithm */
 

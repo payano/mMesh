@@ -28,15 +28,16 @@ SOFTWARE.
 #include "NetworkInterfaceSubscriber.h"
 #include "MeshMessagePublisher.h"
 #include <stdint.h>
+#include "Constants.h"
 #include <thread>         // std::thread
 
 namespace network {
 class NetworkInterface;
-};
+}
 
 namespace NetAlgorithm {
 class NetAlgorithmInterface;
-};
+}
 
 union mesh_internal_msg;
 struct networkData;
@@ -90,6 +91,14 @@ private:
 	void stateMachine();
 	void sm_init();
 
+	void sm_master();
+
+	void sm_broadcast_associate_req(union mesh_internal_msg *msg);
+	void sm_broadcast_associate_rsp(union mesh_internal_msg *msg);
+	void sm_network_assignment_req(union mesh_internal_msg *msg);
+	void sm_register_to_master_req(union mesh_internal_msg *msg);
+
+
 	void sm_starting_seeking_parent();
 	void sm_starting_choosing_parent();
 	void sm_starting_register_to_parent();
@@ -97,6 +106,8 @@ private:
 	void sm_starting_register_to_master();
 	void sm_starting_waiting_for_master();
 	void sm_starting(); /* Main starting */
+
+	void act_on_messages();
 
 	void sm_started_idle();
 	void sm_started_seeking_parent();
@@ -107,6 +118,7 @@ private:
 	void sm_started_ping_waiting_for_parent();
 	void sm_started_ping_neighbours();
 	void sm_started_ping_waiting_for_neighbours();
+	void sm_started_check_children_keepalive_timers();
 	void sm_started(); /* Main started */
 
 	void sm_stopping() {}
@@ -123,6 +135,10 @@ private:
 	void handle_network_assignment_rsp(union mesh_internal_msg *msg);
 	void handle_register_to_master_req(union mesh_internal_msg *msg);
 	void handle_register_to_master_rsp(union mesh_internal_msg *msg);
+	void handle_ping_parent_req(union mesh_internal_msg *msg);
+	void handle_ping_parent_rsp(union mesh_internal_msg *msg);
+	void handle_disconnect_req(union mesh_internal_msg *msg);
+
 	void setPaired(bool val);
 
 	/* */
@@ -130,12 +146,19 @@ private:
 	int timer_counter_ping_parent;
 	int timer_counter_bc_nb;
 	int timer_counter_bc_parent;
+	int keepalive_parent;
+	int keepalive_nb[CHILDREN_SZ];
+
 	void decrease_timer_counters();
+	void decrease_parent_timer();
+	void decrease_nbs_timer();
 	void init_timer_counters();
+	void clear_timer_counters();
 
 	/* Mesh related */
 	void doAssociateReq();
 	void doRegisterReq();
+	void doPingParentReq();
 };
 
 } /* namespace mesh */

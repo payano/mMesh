@@ -39,7 +39,9 @@ Island::Island() :
 		m_register_to_master_req(0),
 		m_register_to_master_rsp(0),
 		m_message_req(0),
-		m_message_rsp(0)
+		m_message_rsp(0),
+		m_ping_parent_req(0),
+		m_ping_parent_rsp(0)
  {
 	// TODO Auto-generated constructor stub
 
@@ -58,37 +60,49 @@ void Island::sendMessage(const struct net_address *to_addr,
 {
 	switch(msg->header.msgno) {
 	case MSGNO::INVALID:
-		m_invalid++;
+		++m_invalid;
 		break;
 	case MSGNO::BROADCAST_ASSOCIATE_REQ:
-		m_broadcast_associate_req++;
+		++m_broadcast_associate_req;
 		break;
 	case MSGNO::BROADCAST_ASSOCIATE_RSP:
-		m_broadcast_associate_rsp++;
+		++m_broadcast_associate_rsp;
 		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
-		m_broadcast_neighbour_req++;
+		++m_broadcast_neighbour_req;
 		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_RSP:
-		m_broadcast_neighbour_rsp++;
+		++m_broadcast_neighbour_rsp;
 		break;
 	case MSGNO::NETWORK_ASSIGNMENT_REQ:
-		m_network_assignment_req++;
+		++m_network_assignment_req;
 		break;
 	case MSGNO::NETWORK_ASSIGNMENT_RSP:
-		m_network_assignment_rsp++;
+		++m_network_assignment_rsp;
 		break;
 	case MSGNO::REGISTER_TO_MASTER_REQ:
-		m_register_to_master_req++;
+		++m_register_to_master_req;
 		break;
 	case MSGNO::REGISTER_TO_MASTER_RSP:
-		m_register_to_master_rsp++;
+		++m_register_to_master_rsp;
+		break;
+	case MSGNO::PING_PARENT_RSP:
+		++m_ping_parent_rsp;
+		break;
+	case MSGNO::PING_PARENT_REQ:
+		++m_ping_parent_req;
+		break;
+	case MSGNO::DISCONNECT_CHILD_REQ:
+		++m_disconnect_child_req;
+		break;
+	case MSGNO::DISCONNECT_CHILD_RSP:
+		++m_disconnect_child_rsp;
 		break;
 	case MSGNO::MESSAGE_REQ:
-		m_message_req++;
+		++m_message_req;
 		break;
 	case MSGNO::MESSAGE_RSP:
-		m_message_rsp++;
+		++m_message_rsp;
 		break;
 
 	}
@@ -165,6 +179,8 @@ void Island::reset() {
 	m_register_to_master_rsp = 0;
 	m_message_req = 0;
 	m_message_rsp = 0;
+	m_ping_parent_req = 0;
+	m_ping_parent_rsp = 0;
 
 
 }

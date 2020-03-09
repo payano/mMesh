@@ -38,9 +38,6 @@ public:
 	                                     union mesh_internal_msg *msg) override;
 	int choose_parent_from_list(struct networkData *nw,
 	                                  struct net_address *parent) override;
-private:
-	bool isChildOf(const struct net_address *parent,
-	               const struct net_address *child);
 };
 
 } /* namespace NetAlgorithm */

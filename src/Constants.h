@@ -23,30 +23,17 @@ SOFTWARE.
 */
 
 #pragma once
+static constexpr int CHILDREN_SZ(5);
+static constexpr int NEIGHBOUR_SZ(10);
+static constexpr int NUM_ADDRESSES(7); // 2^3
+static constexpr int MSG_BUFFER(10);
+static constexpr int MAX_HOPS(12);
+static constexpr int NET_COUNT(9);
+static constexpr int PAYLOAD_SZ(32);
 
-#include <stdint.h>
-#include "NetworkInterface.h"
-
-namespace network {
-
-class Nrf24 : public NetworkInterface {
-protected:
-	void recv_from(union mesh_internal_msg *msg) override {
-		(void)msg;
-	}
-
-public:
-	Nrf24() {}
-	virtual ~Nrf24() {}
-	int init() override {return 0;}
-	void deinit() override {}
-	int start() override {return 0;}
-	int sendto(const struct net_address *dest, union mesh_internal_msg *msg) override {
-		(void)dest;
-		(void)msg;
-		return 0;
-	}
-};
-
-} /* namespace network */
-
+static constexpr int TIMER_COUNTER_PING_NB(6);
+static constexpr int TIMER_COUNTER_PING_PARENT(6);
+static constexpr int TIMER_COUNTER_BC_NB(10);
+static constexpr int TIMER_COUNTER_BC_PARENT(10);
+static constexpr int TIMER_KEEPALIVE(3000);
+static constexpr int TIMER_DECREASE(100);
