@@ -234,52 +234,8 @@ union mesh_internal_msg {
 	struct message_rsp             message_rsp;
 };
 
-struct networkData {
-	bool lock;
-	int pairedChildren;
-	bool mPaired;
-	bool registeredToMaster;
-	struct node_data childs[CHILDREN_SZ];
-	struct node_data parent;
-	net_address mac;
-	union mesh_internal_msg queuedmsgs[MSG_BUFFER];
-	int buffer_count;
-};
-
 class NetHelper{
 public:
-	static int queue_sz(struct networkData *nwd) { return nwd->buffer_count; }
-	static void queue_clear(struct networkData *nwd){
-		nwd->buffer_count = 0;
-	}
-
-	static int queue_add(struct networkData *nwd,
-	                     union mesh_internal_msg *msg){
-		if(nwd->buffer_count >= MSG_BUFFER) return -1;
-
-		copy_internal_msg(&nwd->queuedmsgs[nwd->buffer_count++], msg);
-		return 0;
-
-	}
-
-	static int remove_child_node(struct networkData *nwd, struct node_data *node,
-	                             struct net_address *disband_node){
-		struct node_data *child = nwd->childs;
-		for(int i = 0; i < CHILDREN_SZ; ++i, child++) {
-			// NEEDED?
-			if(false == child->connected) continue;
-			if(!compare_net_address(&node->mac, &child->mac)) continue;
-			clear_net_address(disband_node);
-
-			copy_net_address(disband_node, &child->mac);
-			child->keepalive_count = 0;
-			clear_net_address(&child->mac);
-			child->connected = false;
-			nwd->pairedChildren--;
-			return 0;
-		}
-		return -1;
-	}
 
 	static bool check_timer_zero(struct node_data *node){
 		return node->keepalive_count == 0 ? true : false;
@@ -289,64 +245,15 @@ public:
 		return node->connected == true ? true : false;
 	}
 
-	static int iterateChilds(struct networkData *nwd, struct node_data **node){
-		/* one past last is okay, but not beyond that */
-		const struct node_data *last = &nwd->childs[CHILDREN_SZ];
-		if(nullptr == *node){
-			*node = nwd->childs;
-			return 1;
-		}
-		++(*node);
-		return *node == last ? 0 : 1;
-	}
-
-	static int queue_get(struct networkData *nwd, union mesh_internal_msg *msg){
-		/* take first one, move all one stop the the left in the queue
-		 * for example: [1] -> [0]
-		 */
-		if(0 == nwd->buffer_count) return 1;
-
-		copy_internal_msg(msg, &nwd->queuedmsgs[0]);
-
-		nwd->buffer_count--;
-		for(int i = 0 ; i < nwd->buffer_count; ++i) {
-			copy_internal_msg(&nwd->queuedmsgs[i], &nwd->queuedmsgs[i+1]);
-		}
-
-		return 0;
-	}
-
-	static void decrease_neighbour_timers(struct networkData *nwd, uint value){
-		struct node_data *nwd_child = nwd->childs;
-		for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_child) {
-			if(false == nwd_child->connected) continue;
-			if(nwd_child->keepalive_count <= 0) {
-				nwd_child->keepalive_count = 0;
-				continue;
-			}
-			nwd_child->keepalive_count -= value;
-//			printf_address(&nwd_child->mac);
-//			printf("KEEPALIVE: %d\n",nwd_child->keepalive_count);
-		}
-	}
-
-	static void decrease_parent_timer(struct networkData *nwd, uint value){
-		if(nwd->parent.keepalive_count <= 0){
-			nwd->parent.keepalive_count = 0;
-			return;
-		}
-		nwd->parent.keepalive_count -= value;
-	}
-
-	static struct node_data *findChild(struct networkData *nwd, const struct net_address *child){
-		struct node_data *nwd_child = nwd->childs;
-		for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_child) {
-			if(false == nwd_child->connected) continue;
-			if(!compare_net_address(child, &nwd_child->mac)) continue;
-			return nwd_child;
-		}
-		return nullptr;
-	}
+//	static struct node_data *findChild(struct networkData *nwd, const struct net_address *child){
+//		struct node_data *nwd_child = nwd->childs;
+//		for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_child) {
+//			if(false == nwd_child->connected) continue;
+//			if(!compare_net_address(child, &nwd_child->mac)) continue;
+//			return nwd_child;
+//		}
+//		return nullptr;
+//	}
 
 	static bool compare_net_address(const struct net_address *one, const struct net_address *two)
 	{
@@ -384,22 +291,6 @@ public:
 		address->host_addr = 0;
 	}
 
-	static void init_networkData(struct networkData *nwd){
-		clear_net_address(&nwd->mac);
-		clear_net_address(&nwd->parent.mac);
-		nwd->pairedChildren = 0;
-		nwd->registeredToMaster = false;
-		nwd->mPaired = false;
-		nwd->buffer_count = 0;
-		nwd->lock = false;
-
-		for(int i = 0 ; i < CHILDREN_SZ; ++i) {
-			clear_net_address(&nwd->childs[i].mac);
-			nwd->childs[i].keepalive_count = 0;
-			nwd->childs[i].connected = false;
-		}
-	}
-
 	static void generate_temporary_address(struct net_address *address) {
 		address->broadcast = 0;
 		address->master = 0;
@@ -408,44 +299,6 @@ public:
 			address->nbs[i].net = generate_number(NUM_ADDRESSES);
 		}
 		address->host_addr = generate_number(NUM_ADDRESSES);
-	}
-
-	static int generate_child_address(struct networkData *networkData, struct net_address *address) {
-		// Can cause deadlock
-		while(networkData->lock)
-			usleep(1000);
-
-		networkData->lock = true;
-		clear_net_address(address);
-		int ret;
-		int child_addr = -1;
-		for(int i = 0; i < CHILDREN_SZ; ++i){
-			if(networkData->childs[i].connected == false) {
-				// Found a free slot
-				child_addr = i;
-				break;
-			}
-		}
-
-		// No addresses free.. here we might need to release one.
-		if(child_addr < 0) {return -1;}
-		// Assign it
-		networkData->childs[child_addr].connected = true;
-		networkData->childs[child_addr].keepalive_count = TIMER_KEEPALIVE;
-
-		// When using it we want to start with number 1 not 0
-		child_addr++;
-		networkData->pairedChildren++;
-		// Get new address
-		ret = getNewChildAddress(&networkData->mac, address, child_addr);
-		if(ret) {
-			networkData->lock = false;
-			return -1;
-		}
-		// Add it to parent neighbour list
-		copy_net_address(&networkData->childs[child_addr-1].mac, address);
-		networkData->lock = false;
-		return 0;
 	}
 
 	static void printf_address(const struct net_address *address) {
@@ -490,19 +343,6 @@ public:
 		return "MSGNO DOESN'T EXIST";
 	}
 
-	static int isChildOf(const struct net_address *parent,
-	                     const struct net_address *child) {
-		if(parent->master) return true; // all is childs to master
-
-		for(int i = 0; i < NET_COUNT; ++i) {
-			if(parent->nbs[i].net == child->nbs[i].net) continue;
-			if(parent->nbs[i].net == 0x0) {return true;}
-			break;
-		}
-		return false;
-	}
-
-private:
 	static int copy_internal_msg(union mesh_internal_msg *to,
 	                             const union mesh_internal_msg *from) {
 		int sz = sizeof(*to);
@@ -515,23 +355,6 @@ private:
 			uint8_to[i] = uint8_from[i];
 		}
 		return 0;
-	}
-
-	static int getNewChildAddress(const struct net_address *parent, struct net_address *child, const int childId) {
-		if(parent->master) {
-			// Easy one
-			child->nbs[0].net = childId;
-			return 0;
-		}
-		// here we need to find the parent, also copying the bytes from parent
-		for(int i = 0 ; i < NET_COUNT ; ++i) {
-			child->nbs[i].net = parent->nbs[i].net;
-			if(parent->nbs[i].net == 0) {
-				child->nbs[i].net = childId;
-				return 0;
-			}
-		}
-		return -1;
 	}
 
 	static uint8_t generate_number(int max_number){

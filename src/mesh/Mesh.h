@@ -31,6 +31,10 @@ SOFTWARE.
 #include "Constants.h"
 #include <thread>         // std::thread
 
+namespace mesh {
+class NetworkData;
+}
+
 namespace network {
 class NetworkInterface;
 }
@@ -51,7 +55,7 @@ static constexpr int CHILD_COUNT(5);
 using namespace network;
 class Mesh : public MeshMessagePublisher, NetworkInterfaceSubscriber {
 private:
-	struct networkData *network;  /*!< Detailed description after the member */
+	NetworkData *network;  /*!< Detailed description after the member */
 	NetworkInterface *nw;
 	NetAlgorithm::NetAlgorithmInterface *algorithm;
 	char name[MAX_NAME];
@@ -97,6 +101,8 @@ private:
 	void sm_broadcast_associate_rsp(union mesh_internal_msg *msg);
 	void sm_network_assignment_req(union mesh_internal_msg *msg);
 	void sm_register_to_master_req(union mesh_internal_msg *msg);
+	void sm_ping_parent_req(union mesh_internal_msg *msg);
+	void sm_ping_parent_rsp(union mesh_internal_msg *msg);
 
 
 	void sm_starting_seeking_parent();

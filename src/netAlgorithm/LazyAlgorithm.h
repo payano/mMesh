@@ -25,19 +25,24 @@ SOFTWARE.
 #pragma once
 #include "NetAlgorithmInterface.h"
 
+namespace mesh {
+class NetworkData;
+}
 namespace NetAlgorithm {
 class LazyAlgorithm : public NetAlgorithmInterface{
 public:
 	LazyAlgorithm();
 	virtual ~LazyAlgorithm();
 
-	const struct net_address *getRouteForPacket(const struct networkData *nw,
+	const struct net_address *getRouteForPacket(const mesh::NetworkData *nw,
 	                                            const struct net_address *to) override;
 	/* if many nodes are responding, take the best of the alternatives. */
-	int associate_rsp_add_parent_to_list(struct networkData *nw,
+	int associate_rsp_add_parent_to_list(mesh::NetworkData *nw,
 	                                     union mesh_internal_msg *msg) override;
-	int choose_parent_from_list(struct networkData *nw,
+	int choose_parent_from_list(mesh::NetworkData*nw,
 	                                  struct net_address *parent) override;
+	int isChildOf(const struct net_address *parent,
+	                      const struct net_address *child) override;
 };
 
 } /* namespace NetAlgorithm */

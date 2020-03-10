@@ -22,30 +22,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
-
-struct networkData;
-struct net_address;
-union mesh_internal_msg;
+#include <NetworkData.h>
 
 namespace mesh {
-class NetworkData;
+
+NetworkData::NetworkData() {
+	NetHelper::clear_net_address(&mac);
+	NetHelper::clear_net_address(&parent.mac);
+	pairedChildren = 0;
+	registeredToMaster = false;
+	mPaired = false;
+	buffer_count = 0;
+
+	for(int i = 0 ; i < CHILDREN_SZ; ++i) {
+		NetHelper::clear_net_address(&childs[i].mac);
+		childs[i].keepalive_count = 0;
+		childs[i].connected = false;
+	}
+	// TODO Auto-generated constructor stub
+
 }
-namespace NetAlgorithm {
 
-class NetAlgorithmInterface {
-public:
-	virtual const struct net_address *getRouteForPacket(const mesh::NetworkData *nw,
-	                                       const struct net_address *to) = 0;
-	/* if many nodes are responding, take the best of the alternatives. */
-	virtual int associate_rsp_add_parent_to_list(mesh::NetworkData *nw,
-	                                             union mesh_internal_msg *msg) = 0;
-	virtual int choose_parent_from_list(mesh::NetworkData *nw,
-	                                    struct net_address *parent) = 0;
-	virtual int isChildOf(const struct net_address *parent,
-	                      const struct net_address *child) = 0;
-	virtual ~NetAlgorithmInterface(){}
-};
+NetworkData::~NetworkData() {
+	// TODO Auto-generated destructor stub
+}
 
-} /* namespace routing */
-
+} /* namespace mesh */

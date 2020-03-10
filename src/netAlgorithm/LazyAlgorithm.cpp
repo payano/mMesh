@@ -24,6 +24,7 @@ SOFTWARE.
 
 #include "LazyAlgorithm.h"
 #include "DataTypes.h"
+#include "NetworkData.h"
 
 namespace NetAlgorithm {
 
@@ -36,7 +37,7 @@ LazyAlgorithm::~LazyAlgorithm() {
 	// TODO Auto-generated destructor stub
 }
 
-const struct net_address *LazyAlgorithm::getRouteForPacket(const struct networkData *nw,
+const struct net_address *LazyAlgorithm::getRouteForPacket(const mesh::NetworkData *nw,
                                                            const struct net_address *to)
 {
 	/* Check nb's */
@@ -49,7 +50,7 @@ const struct net_address *LazyAlgorithm::getRouteForPacket(const struct networkD
 	}
 
 	for(int i = 0; i < nw->pairedChildren; ++i) {
-		bool childOf = NetHelper::isChildOf(&nw->childs[i].mac, to);
+		bool childOf = isChildOf(&nw->childs[i].mac, to);
 		if(true == childOf) {
 			return &nw->childs[i].mac;
 		}
@@ -60,20 +61,20 @@ const struct net_address *LazyAlgorithm::getRouteForPacket(const struct networkD
 	return &nw->parent.mac;
 }
 
-int LazyAlgorithm::associate_rsp_add_parent_to_list(struct networkData *nw,
+int LazyAlgorithm::associate_rsp_add_parent_to_list(mesh::NetworkData *nw,
                                                     union mesh_internal_msg *msg)
 {
-	NetHelper::queue_add(nw, msg);
+	nw->queue_add(msg);
 	return 0;
 }
-int LazyAlgorithm::choose_parent_from_list(struct networkData *nw,
+int LazyAlgorithm::choose_parent_from_list(mesh::NetworkData *nw,
                                                  struct net_address *parent)
 {
 	// Choose the right one to associate with.
 	// We take the first one and discard the rest.
 	union mesh_internal_msg queue_msg;
-	NetHelper::queue_get(nw, &queue_msg);
-	NetHelper::queue_clear(nw);
+	nw->queue_get(&queue_msg);
+	nw->queue_clear();
 
 	if(MSGNO::BROADCAST_ASSOCIATE_RSP != queue_msg.header.msgno){
 		// This is error
@@ -85,5 +86,17 @@ int LazyAlgorithm::choose_parent_from_list(struct networkData *nw,
 	return 0;
 	}
 
+int LazyAlgorithm::isChildOf(const struct net_address *parent,
+                             const struct net_address *child)
+{
+	if(parent->master) return true; // all is childs to master
+
+	for(int i = 0; i < NET_COUNT; ++i) {
+		if(parent->nbs[i].net == child->nbs[i].net) continue;
+		if(parent->nbs[i].net == 0x0) {return true;}
+		break;
+	}
+	return false;
+}
 } /* namespace NetAlgorithm */
 
