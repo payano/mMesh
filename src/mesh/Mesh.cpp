@@ -28,6 +28,7 @@ SOFTWARE.
 #include "DataTypes.h"
 #include "LazyAlgorithm.h"
 #include "NetworkData.h"
+#include "MeshNetworkHandler.h"
 /* should be removed later */
 //#include <stdio.h>
 #include <unistd.h>
@@ -83,9 +84,10 @@ struct stateData {
 
 Mesh::Mesh(NetworkInterface *nw) : nw(nw) {
 	network = new NetworkData;
-	nw->registerSubscriber(this);
 	statedata = new stateData;
 	algorithm = new NetAlgorithm::LazyAlgorithm();
+
+	networkHandler = new MeshNetworkHandler(this, network, nw, algorithm);
 
 	initStateMachine();
 	timerStarted = false;
@@ -219,7 +221,7 @@ void Mesh::sm_network_assignment_req(union mesh_internal_msg *msg)
 	rsp.header.hop_count = 0;
 	rsp.header.msgno = MSGNO::NETWORK_ASSIGNMENT_RSP;
 
-	ret = getSubnetToChild(&rsp.assignment_rsp.new_address);
+	ret = networkHandler->getSubnetToChild(&rsp.assignment_rsp.new_address);
 	if(ret) {
 		/* could not get a new subnet.
 		 * this needs to be sorted, if this will cause
@@ -303,9 +305,9 @@ void Mesh::sm_init()
 
 void Mesh::sm_starting_seeking_parent()
 {
-	armTimer(300); /* 100 ms */
+	armTimer(200); /* 100 ms */
 	statedata->starting_state = STARTING_STATE::STARTING_CHOOSING_PARENT;
-	doAssociateReq();
+	networkHandler->doAssociateReq();
 }
 
 void Mesh::sm_starting_choosing_parent() {
@@ -379,7 +381,7 @@ void Mesh::sm_starting_waiting_for_parent()
 void Mesh::sm_starting_register_to_master()
 {
 	armTimer(200); /* 100 ms */
-	doRegisterReq();
+	networkHandler->doRegisterReq();
 	statedata->starting_state = STARTING_STATE::STARTING_WAITING_FOR_MASTER;
 }
 
@@ -602,7 +604,7 @@ void Mesh::sm_started_ping_parent()
 {
 	printf("%s: %s\n", getName(), __FUNCTION__);
 	armTimer(100); /* 100 ms */
-	doPingParentReq();
+	networkHandler->doPingParentReq();
 	statedata->started_state = STARTED_STATE::STARTED_PING_WAITING_FOR_PARENT;
 
 }
@@ -705,188 +707,6 @@ void Mesh::sm_started() {
 	}
 }
 
-int Mesh::getSubnetToChild(struct net_address *address)
-{
-	int ret = 0;
-	// init subnet
-	NetHelper::clear_net_address(address);
-
-	ret = network->generate_child_address(address);
-	return ret;
-}
-
-void Mesh::network_recv(union mesh_internal_msg *msg) {
-	/* These methods will be run from the interrupt vector
-	 * They all they is doing is adding the messages to the message queue
-	 * If the message destination is to this node.
-	 */
-
-	switch(msg->header.msgno) {
-	case MSGNO::BROADCAST_ASSOCIATE_REQ:
-		handle_associate_req(msg);
-		break;
-	case MSGNO::BROADCAST_ASSOCIATE_RSP:
-		handle_associate_rsp(msg);
-		break;
-	case MSGNO::NETWORK_ASSIGNMENT_REQ:
-		handle_network_assignment_req(msg);
-		break;
-	case MSGNO::NETWORK_ASSIGNMENT_RSP:
-		handle_network_assignment_rsp(msg);
-		break;
-	case MSGNO::REGISTER_TO_MASTER_REQ:
-		handle_register_to_master_req(msg);
-		break;
-	case MSGNO::REGISTER_TO_MASTER_RSP:
-		handle_register_to_master_rsp(msg);
-		break;
-	case PING_PARENT_REQ:
-//		printf("%s: PING_PARENT_REQ\n", getName());
-		handle_ping_parent_req(msg);
-		break;
-	case PING_PARENT_RSP:
-//		printf("%s: PING_PARENT_RSP\n", getName());
-		handle_ping_parent_rsp(msg);
-		break;
-	case MSGNO::DISCONNECT_CHILD_REQ:
-//		printf("%s: DISCONNECT_CHILD_REQ\n", getName());
-		handle_disconnect_req(msg);
-		break;
-	case MSGNO::DISCONNECT_CHILD_RSP:
-	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
-	case MSGNO::BROADCAST_NEIGHBOUR_RSP:
-	case MSGNO::MESSAGE_REQ:
-	case MSGNO::MESSAGE_RSP:
-	case MSGNO::INVALID:
-		break;
-	}
-}
-
-void Mesh::handle_associate_rsp(union mesh_internal_msg *msg) {
-	printf("%s: BROADCAST_ASSOCIATE_RSP\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::handle_associate_req(union mesh_internal_msg *msg){
-	if(false == network->mPaired || network->pairedChildren >= CHILDREN_SZ) {
-		return;
-	}
-	printf("%s: BROADCAST_ASSOCIATE_REQ\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::handle_network_assignment_req(union mesh_internal_msg *msg){
-	printf("%s: NETWORK_ASSIGNMENT_REQ\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::handle_network_assignment_rsp(union mesh_internal_msg *msg){
-	printf("%s: NETWORK_ASSIGNMENT_RSP\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::handle_register_to_master_req(union mesh_internal_msg *msg){
-	// Drop packet. not valid anymore.
-	msg->header.hop_count++;
-	if(msg->header.hop_count >= MAX_HOPS) {
-		return;
-	}
-
-	// I'm not master, pass it along
-	// Here we should do routing algorithm
-	if(!network->mac.master){
-		const struct net_address *dst;
-		dst = algorithm->getRouteForPacket(network, &MASTER);
-		nw->sendto(dst, msg);
-		printf("%s: ROUTING NETWORK_ASSIGNMENT_RSP\n", getName());
-		return;
-	}
-
-	printf("%s: NETWORK_ASSIGNMENT_RSP\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::handle_register_to_master_rsp(union mesh_internal_msg *msg){
-
-	// Drop packet. not valid anymore.
-	msg->header.hop_count++;
-	if(msg->header.hop_count >= MAX_HOPS) return;
-
-	// I'm not master, pass it along
-	// Here we should do routing algorithm
-	if(!NetHelper::compare_net_address(&network->mac,
-	                                   &msg->reg_master_rsp.destination)){
-		const struct net_address *dst = algorithm->getRouteForPacket(
-				network, &msg->reg_master_rsp.destination);
-		nw->sendto(dst, msg);
-
-		printf("%s: ROUTING REGISTER_TO_MASTER_RSP\n", getName());
-		printf("%s: HEADER DEST: ", getName());
-		NetHelper::printf_address(&msg->reg_master_rsp.destination);
-		printf("%s: ROUTING DST: ", getName());
-		NetHelper::printf_address(dst);
-		return;
-	}
-
-	printf("%s: REGISTER_TO_MASTER_RSP\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::handle_ping_parent_req(union mesh_internal_msg *msg)
-{
-	// If it is our child, respond.
-	if(!algorithm->isChildOf(&network->mac, &msg->ping_parent_req.from))
-		return;
-
-	network->queue_add(msg);
-}
-
-void Mesh::handle_ping_parent_rsp(union mesh_internal_msg *msg)
-{
-	// Check that is ours
-	if(!NetHelper::compare_net_address(&network->mac, &msg->ping_parent_rsp.to))
-		return;
-	printf("%s: handle_ping_parent_rsp\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::handle_disconnect_req(union mesh_internal_msg *msg)
-{
-
-	//Check parent
-	if(!NetHelper::compare_net_address(&network->parent.mac,
-	                               &msg->disconnect_child_req.from)) return;
-
-	printf("%s: handle_ping_parent_rsp\n", getName());
-	network->queue_add(msg);
-}
-
-void Mesh::doAssociateReq(){
-	union mesh_internal_msg msg;
-	msg.header.msgno = MSGNO::BROADCAST_ASSOCIATE_REQ;
-	msg.header.hop_count = 0;
-	NetHelper::copy_net_address(&msg.associate_req.from_addr, &network->mac);
-	nw->sendto(&BROADCAST, &msg);
-}
-
-void Mesh::doRegisterReq(){
-	union mesh_internal_msg msg;
-	msg.header.msgno = MSGNO::REGISTER_TO_MASTER_REQ;
-	msg.header.hop_count = 0;
-	printf("%s: doing doRegisterReq: ", getName());
-	NetHelper::printf_address(&network->mac);
-	NetHelper::copy_net_address(&msg.reg_master_req.host_addr, &network->mac);
-	nw->sendto(&network->parent.mac, &msg);
-}
-
-void Mesh::doPingParentReq()
-{
-	union mesh_internal_msg msg;
-	msg.header.msgno = MSGNO::PING_PARENT_REQ;
-	msg.header.hop_count = 0;
-	NetHelper::copy_net_address(&msg.ping_parent_req.from, &network->mac);
-	nw->sendto(&network->parent.mac, &msg);
-}
 void Mesh::setPaired(bool val){network->mPaired = val;}
 
 } /* namespace mesh */

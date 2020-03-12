@@ -33,6 +33,7 @@ SOFTWARE.
 
 namespace mesh {
 class NetworkData;
+class MeshNetworkHandler;
 }
 
 namespace network {
@@ -44,7 +45,7 @@ class NetAlgorithmInterface;
 }
 
 union mesh_internal_msg;
-struct networkData;
+//struct networkData;
 struct net_address;
 
 namespace mesh {
@@ -53,11 +54,12 @@ static constexpr int MAX_NAME(50);
 static constexpr int CHILD_COUNT(5);
 
 using namespace network;
-class Mesh : public MeshMessagePublisher, NetworkInterfaceSubscriber {
+class Mesh : public MeshMessagePublisher {
 private:
 	NetworkData *network;  /*!< Detailed description after the member */
 	NetworkInterface *nw;
 	NetAlgorithm::NetAlgorithmInterface *algorithm;
+	MeshNetworkHandler *networkHandler;
 	char name[MAX_NAME];
 	uint8_t childs[CHILD_COUNT];
 	bool mSetMaster;
@@ -131,20 +133,6 @@ private:
 	void sm_stopped() {}
 	void sm_error() {}
 
-	/* Network related */
-	int getSubnetToChild(struct net_address *address);
-
-	void network_recv(union mesh_internal_msg *msg) override;
-	void handle_associate_rsp(union mesh_internal_msg *msg);
-	void handle_associate_req(union mesh_internal_msg *msg);
-	void handle_network_assignment_req(union mesh_internal_msg *msg);
-	void handle_network_assignment_rsp(union mesh_internal_msg *msg);
-	void handle_register_to_master_req(union mesh_internal_msg *msg);
-	void handle_register_to_master_rsp(union mesh_internal_msg *msg);
-	void handle_ping_parent_req(union mesh_internal_msg *msg);
-	void handle_ping_parent_rsp(union mesh_internal_msg *msg);
-	void handle_disconnect_req(union mesh_internal_msg *msg);
-
 	void setPaired(bool val);
 
 	/* */
@@ -161,10 +149,6 @@ private:
 	void init_timer_counters();
 	void clear_timer_counters();
 
-	/* Mesh related */
-	void doAssociateReq();
-	void doRegisterReq();
-	void doPingParentReq();
 };
 
 } /* namespace mesh */
