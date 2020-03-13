@@ -27,6 +27,7 @@ SOFTWARE.
 
 union mesh_internal_msg;
 struct net_address;
+struct node_data;
 
 namespace mesh {
 class NetworkData;
@@ -69,9 +70,15 @@ public:
 	void handle_disconnect_req(union mesh_internal_msg *msg);
 
 	/* Mesh related */
-	void doAssociateReq();
+	void doBroadcastAssociateReq();
+	void doBroadcastAssociateRsp(union mesh_internal_msg *msg);
 	void doRegisterReq();
 	void doPingParentReq();
+	void doRegisterToMasterRsp(union mesh_internal_msg *msg);
+	int doChooseParent();
+	void doRegisterToMasterReq(union mesh_internal_msg *msg);
+	void doNetworkAssignmentRsp(union mesh_internal_msg *msg);
+	void doDisconnectChildReq(struct node_data *node);
 
 };
 

@@ -96,6 +96,7 @@ private:
 	void initStateMachine();
 	void stateMachine();
 	void sm_init();
+	void sm_error() {}
 
 	void sm_master();
 
@@ -118,20 +119,9 @@ private:
 	void act_on_messages();
 
 	void sm_started_idle();
-	void sm_started_seeking_parent();
-	void sm_started_choosing_parent();
-	void sm_started_seeking_neighbours();
-	void sm_started_choosing_neighbours();
-	void sm_started_ping_parent();
-	void sm_started_ping_waiting_for_parent();
-	void sm_started_ping_neighbours();
-	void sm_started_ping_waiting_for_neighbours();
-	void sm_started_check_children_keepalive_timers();
 	void sm_started(); /* Main started */
 
-	void sm_stopping() {}
-	void sm_stopped() {}
-	void sm_error() {}
+	void sm_started_check_children_keepalive_timers();
 
 	void setPaired(bool val);
 

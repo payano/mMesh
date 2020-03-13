@@ -81,7 +81,7 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 		handle_register_to_master_rsp(msg);
 		break;
 	case PING_PARENT_REQ:
-//		printf("%s: PING_PARENT_REQ\n", getName());
+//		printf("%s: _ PING_PARENT_REQ\n", mesh->getName());
 		handle_ping_parent_req(msg);
 		break;
 	case PING_PARENT_RSP:
@@ -179,7 +179,6 @@ void MeshNetworkHandler::handle_ping_parent_req(union mesh_internal_msg *msg)
 	// If it is our child, respond.
 	if(!algorithm->isChildOf(&network->mac, &msg->ping_parent_req.from))
 		return;
-
 	network->queue_add(msg);
 }
 
@@ -203,12 +202,21 @@ void MeshNetworkHandler::handle_disconnect_req(union mesh_internal_msg *msg)
 	network->queue_add(msg);
 }
 
-void MeshNetworkHandler::doAssociateReq(){
+void MeshNetworkHandler::doBroadcastAssociateReq(){
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::BROADCAST_ASSOCIATE_REQ;
 	msg.header.hop_count = 0;
 	NetHelper::copy_net_address(&msg.associate_req.from_addr, &network->mac);
 	nw->sendto(&BROADCAST, &msg);
+}
+
+void MeshNetworkHandler::doBroadcastAssociateRsp(union mesh_internal_msg *msg)
+{
+	union mesh_internal_msg rsp;
+	rsp.header.hop_count = 0;
+	rsp.header.msgno = MSGNO::BROADCAST_ASSOCIATE_RSP;
+	NetHelper::copy_net_address(&rsp.associate_rsp.parent_address, &network->mac);
+	nw->sendto(&msg->associate_req.from_addr, &rsp);
 }
 
 void MeshNetworkHandler::doRegisterReq(){
@@ -230,6 +238,97 @@ void MeshNetworkHandler::doPingParentReq()
 	nw->sendto(&network->parent.mac, &msg);
 }
 
+void MeshNetworkHandler::doRegisterToMasterRsp(union mesh_internal_msg *msg)
+{
+	union mesh_internal_msg rsp;
+	const struct net_address *dst;
+	rsp.header.hop_count = 0;
+	rsp.reg_master_rsp.header.msgno = MSGNO::REGISTER_TO_MASTER_RSP;
+	rsp.reg_master_rsp.status = STATUS::OK;
 
+	printf("HOST CALLED: ");
+	NetHelper::printf_address(&msg->reg_master_req.host_addr);
+
+	NetHelper::copy_net_address(&rsp.reg_master_rsp.destination,
+	                            &msg->reg_master_req.host_addr);
+
+	dst = algorithm->getRouteForPacket(network,
+	                                   &rsp.reg_master_rsp.destination);
+	nw->sendto(dst, &rsp);
+	printf("%s -- DST ADDR: ", mesh->getName());
+	NetHelper::printf_address(dst);
+	printf("%s -- TO: ", mesh->getName());
+	NetHelper::printf_address(&msg->reg_master_rsp.destination);
+
+}
+
+int MeshNetworkHandler::doChooseParent()
+{
+	struct net_address parent;
+	int ret = algorithm->choose_parent_from_list(network, &parent);
+
+	if(ret) {
+		return -1 ;
+	}
+
+	printf("%s: STARTING_CHOOSING_PARENT\n", mesh->getName());
+	union mesh_internal_msg rsp;
+	rsp.header.msgno = MSGNO::NETWORK_ASSIGNMENT_REQ;
+	rsp.header.hop_count = 0;
+	NetHelper::copy_net_address(&rsp.associate_req.from_addr, &network->mac);
+
+	nw->sendto(&parent, &rsp);
+	return 0;
+
+}
+
+void MeshNetworkHandler::doRegisterToMasterReq(union mesh_internal_msg *msg)
+{
+	printf("%s: STARTING_WAITING_FOR_PARENT\n", mesh->getName());
+	struct network_assignment_rsp *new_msg = &msg->assignment_rsp;
+	NetHelper::copy_net_address(&network->parent.mac, &new_msg->parent);
+	NetHelper::copy_net_address(&network->mac, &new_msg->new_address);
+	nw->setAddr(&network->mac);
+	network->mPaired = true;
+}
+
+void MeshNetworkHandler::doNetworkAssignmentRsp(union mesh_internal_msg *msg)
+{
+	int ret;
+	union mesh_internal_msg rsp;
+	rsp.header.hop_count = 0;
+	rsp.header.msgno = MSGNO::NETWORK_ASSIGNMENT_RSP;
+
+	ret = getSubnetToChild(&rsp.assignment_rsp.new_address);
+	if(ret) {
+		/* could not get a new subnet.
+		 * this needs to be sorted, if this will cause
+		 * a child not to join the network.
+		 */
+		return;
+	}
+	NetHelper::copy_net_address(&rsp.assignment_rsp.parent, &network->mac);
+	nw->sendto(&msg->assignment_req.from_address, &rsp);
+	printf("SENDING TO: ");
+	NetHelper::printf_address(&msg->assignment_req.from_address);
+}
+
+void MeshNetworkHandler::doDisconnectChildReq(struct node_data *node)
+{
+	/* We want to disconnect the node.
+	 * because we don't consider it to be online any more.
+	 */
+	struct net_address remove_node;
+	int ret = network->remove_child_node(node, &remove_node);
+	if(ret) return;
+
+	union mesh_internal_msg msg;
+	msg.header.hop_count = 0;
+	// We dont want a respond for this message.
+	msg.header.msgno = MSGNO::DISCONNECT_CHILD_REQ;
+	NetHelper::copy_net_address(&msg.disconnect_child_req.from, &network->mac);
+	NetHelper::copy_net_address(&msg.disconnect_child_req.to, &remove_node);
+	nw->sendto(&remove_node, &msg);
+}
 
 } /* namespace mesh */

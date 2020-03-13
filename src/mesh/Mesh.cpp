@@ -49,8 +49,6 @@ enum STATE {
 	STATE_MASTER,
 	STATE_STARTING,
 	STATE_STARTED,
-	STATE_STOPPING,
-	STATE_STOPPED,
 	STATE_ERROR,
 };
 
@@ -66,13 +64,9 @@ enum STARTING_STATE {
 enum STARTED_STATE {
 	STARTED_IDLE,
 	STARTED_SEEKING_PARENT,
-	STARTED_CHOOSING_PARENT,
 	STARTED_SEEKING_NEIGHBOURS,
-	STARTED_CHOOSING_NEIGHBOURS,
 	STARTED_PING_PARENT,
-	STARTED_PING_WAITING_FOR_PARENT,
 	STARTED_PING_NEIGHBOURS,
-	STARTED_PING_WAITING_FOR_NEIGHBOURS,
 	STARTED_CHECK_CHILDREN_KEEPALIVE_TIMERS,
 };
 
@@ -188,12 +182,6 @@ void Mesh::stateMachine()
 	case STATE_STARTED:
 		sm_started();
 		break;
-	case STATE_STOPPING:
-		sm_stopping();
-		break;
-	case STATE_STOPPED:
-		sm_stopped();
-		break;
 	case STATE_NONE:
 	case STATE_ERROR:
 		sm_error();
@@ -201,12 +189,9 @@ void Mesh::stateMachine()
 	}
 }
 
-void Mesh::sm_broadcast_associate_req(union mesh_internal_msg *msg){
-	union mesh_internal_msg rsp;
-	rsp.header.hop_count = 0;
-	rsp.header.msgno = MSGNO::BROADCAST_ASSOCIATE_RSP;
-	NetHelper::copy_net_address(&rsp.associate_rsp.parent_address, &network->mac);
-	nw->sendto(&msg->associate_req.from_addr, &rsp);
+void Mesh::sm_broadcast_associate_req(union mesh_internal_msg *msg)
+{
+	networkHandler->doBroadcastAssociateRsp(msg);
 }
 
 void Mesh::sm_broadcast_associate_rsp(union mesh_internal_msg *msg)
@@ -216,52 +201,17 @@ void Mesh::sm_broadcast_associate_rsp(union mesh_internal_msg *msg)
 
 void Mesh::sm_network_assignment_req(union mesh_internal_msg *msg)
 {
-	int ret;
-	union mesh_internal_msg rsp;
-	rsp.header.hop_count = 0;
-	rsp.header.msgno = MSGNO::NETWORK_ASSIGNMENT_RSP;
-
-	ret = networkHandler->getSubnetToChild(&rsp.assignment_rsp.new_address);
-	if(ret) {
-		/* could not get a new subnet.
-		 * this needs to be sorted, if this will cause
-		 * a child not to join the network.
-		 */
-		return;
-	}
-	NetHelper::copy_net_address(&rsp.assignment_rsp.parent, &network->mac);
-	nw->sendto(&msg->assignment_req.from_address, &rsp);
-	printf("SENDING TO: ");
-	NetHelper::printf_address(&msg->assignment_req.from_address);
+	networkHandler->doNetworkAssignmentRsp(msg);
 }
 
 void Mesh::sm_register_to_master_req(union mesh_internal_msg *msg)
 {
-	union mesh_internal_msg rsp;
-	const struct net_address *dst;
 
 	/* I think we need to talk to an external application,
 	 * and then respond back?
 	 * For now, we respond back, saying OK!
 	 */
-	rsp.header.hop_count = 0;
-	rsp.reg_master_rsp.header.msgno = MSGNO::REGISTER_TO_MASTER_RSP;
-	rsp.reg_master_rsp.status = STATUS::OK;
-
-	printf("HOST CALLED: ");
-	NetHelper::printf_address(&msg->reg_master_req.host_addr);
-
-	NetHelper::copy_net_address(&rsp.reg_master_rsp.destination,
-	                            &msg->reg_master_req.host_addr);
-
-	dst = algorithm->getRouteForPacket(network,
-	                                   &rsp.reg_master_rsp.destination);
-	nw->sendto(dst, &rsp);
-	printf("%s -- DST ADDR: ", getName());
-	NetHelper::printf_address(dst);
-	printf("%s -- TO: ", getName());
-	NetHelper::printf_address(&msg->reg_master_rsp.destination);
-
+	networkHandler->doRegisterToMasterRsp(msg);
 }
 
 void Mesh::sm_ping_parent_req(union mesh_internal_msg *msg)
@@ -307,7 +257,7 @@ void Mesh::sm_starting_seeking_parent()
 {
 	armTimer(200); /* 100 ms */
 	statedata->starting_state = STARTING_STATE::STARTING_CHOOSING_PARENT;
-	networkHandler->doAssociateReq();
+	networkHandler->doBroadcastAssociateReq();
 }
 
 void Mesh::sm_starting_choosing_parent() {
@@ -320,22 +270,11 @@ void Mesh::sm_starting_choosing_parent() {
 		return;
 	}
 
-	int ret;
-	struct net_address parent;
-	ret = algorithm->choose_parent_from_list(network, &parent);
-
+	int ret = networkHandler->doChooseParent();
 	if(ret) {
 		statedata->starting_state = STARTING_STATE::STARTING_SEEKING_PARENT;
 		return;
 	}
-
-	printf("%s: STARTING_CHOOSING_PARENT\n", getName());
-	union mesh_internal_msg rsp;
-	rsp.header.msgno = MSGNO::NETWORK_ASSIGNMENT_REQ;
-	rsp.header.hop_count = 0;
-	NetHelper::copy_net_address(&rsp.associate_req.from_addr, &network->mac);
-
-	nw->sendto(&parent, &rsp);
 
 	// Done
 	statedata->starting_state = STARTING_STATE::STARTING_REGISTER_TO_PARENT;
@@ -367,12 +306,7 @@ void Mesh::sm_starting_waiting_for_parent()
 		return;
 	}
 
-	printf("%s: STARTING_WAITING_FOR_PARENT\n", getName());
-	struct network_assignment_rsp *msg = &queue_msg.assignment_rsp;
-	NetHelper::copy_net_address(&network->parent.mac, &msg->parent);
-	NetHelper::copy_net_address(&network->mac, &msg->new_address);
-	nw->setAddr(&network->mac);
-	network->mPaired = true;
+	networkHandler->doRegisterToMasterReq(&queue_msg);
 
 	// Change state
 	statedata->starting_state = STARTING_STATE::STARTING_REGISTER_TO_MASTER;
@@ -494,7 +428,7 @@ void Mesh::act_on_messages()
 	union mesh_internal_msg msg;
 //	int i = 0;
 	while(!network->queue_get(&msg)){
-//		printf("%s: int: %d\n", getName(), i++);
+		printf("%s: msgno: %d\n", getName(), msg.header.msgno);
 		switch(msg.header.msgno) {
 		case MSGNO::BROADCAST_ASSOCIATE_REQ:
 			printf("%s: BROADCAST_ASSOCIATE_REQ\n", getName());
@@ -515,7 +449,7 @@ void Mesh::act_on_messages()
 			sm_register_to_master_req(&msg);
 			break;
 		case MSGNO::PING_PARENT_REQ:
-			printf("%s: PING_PARENT_REQ\n", getName());
+			printf("%s: !!!PING_PARENT_REQ\n", getName());
 			sm_ping_parent_req(&msg);
 			break;
 		case MSGNO::PING_PARENT_RSP:
@@ -548,8 +482,6 @@ void Mesh::act_on_messages()
 
 void Mesh::sm_started_idle()
 {
-	act_on_messages();
-
 	if(timerStarted) return;
 
 	armTimer(100); // 10sec
@@ -576,133 +508,40 @@ void Mesh::sm_started_idle()
 	decrease_nbs_timer();
 }
 
-void Mesh::sm_started_seeking_parent()
-{
-//	printf("%s: %s\n", getName(), __FUNCTION__);
-	statedata->started_state = STARTED_STATE::STARTED_CHOOSING_PARENT;
-}
-
-void Mesh::sm_started_choosing_parent()
-{
-//	printf("%s: %s\n", getName(), __FUNCTION__);
-	statedata->started_state = STARTED_STATE::STARTED_IDLE;
-}
-
-void Mesh::sm_started_seeking_neighbours()
-{
-//	printf("%s: %s\n", getName(), __FUNCTION__);
-	statedata->started_state = STARTED_STATE::STARTED_CHOOSING_NEIGHBOURS;
-}
-
-void Mesh::sm_started_choosing_neighbours()
-{
-//	printf("%s: %s\n", getName(), __FUNCTION__);
-	statedata->started_state = STARTED_STATE::STARTED_IDLE;
-}
-
-void Mesh::sm_started_ping_parent()
-{
-	printf("%s: %s\n", getName(), __FUNCTION__);
-	armTimer(100); /* 100 ms */
-	networkHandler->doPingParentReq();
-	statedata->started_state = STARTED_STATE::STARTED_PING_WAITING_FOR_PARENT;
-
-}
-
-void Mesh::sm_started_ping_waiting_for_parent()
-{
-//	printf("%s: %s\n", getName(), __FUNCTION__);
-	if(!timerDone) return;
-
-	statedata->started_state = STARTED_STATE::STARTED_IDLE;
-	if(0 == network->queue_sz())
-	{
-		// No answer, dont update the counter.
-		return;
-	}
-
-	// Only check first, we only have one parent.
-	union mesh_internal_msg queue_msg;
-	network->queue_get(&queue_msg);
-	network->queue_clear();
-	if(MSGNO::PING_PARENT_RSP != queue_msg.header.msgno){
-		// Error
-		return;
-	}
-
-//	printf("%s: PARENT RESPONSE!\n", getName());
-
-}
-
-void Mesh::sm_started_ping_neighbours()
-{
-//	printf("%s: %s\n", getName(), __FUNCTION__);
-	statedata->started_state = STARTED_STATE::STARTED_PING_WAITING_FOR_NEIGHBOURS;
-}
-
-void Mesh::sm_started_ping_waiting_for_neighbours()
-{
-//	printf("%s: %s\n", getName(), __FUNCTION__);
-	statedata->started_state = STARTED_STATE::STARTED_IDLE;
-}
-
 void Mesh::sm_started_check_children_keepalive_timers()
 {
 	struct node_data *current = nullptr;
 	while(network->iterateChilds(&current)){
 		if(!NetHelper::checkConnected(current)) continue;
 		if(!NetHelper::check_timer_zero(current)) continue;
-
-		/* We want to disconnect the node.
-		 * because we don't consider it to be online any more.
-		 */
-		struct net_address remove_node;
-		int ret = network->remove_child_node(current, &remove_node);
-		if(ret) continue;
-
-		union mesh_internal_msg msg;
-		msg.header.hop_count = 0;
-		// We dont want a respond for this message.
-		msg.header.msgno = MSGNO::DISCONNECT_CHILD_REQ;
-		NetHelper::copy_net_address(&msg.disconnect_child_req.from, &network->mac);
-		NetHelper::copy_net_address(&msg.disconnect_child_req.to, &remove_node);
-		nw->sendto(&remove_node, &msg);
-
+		networkHandler->doDisconnectChildReq(current);
 	}
 	statedata->started_state = STARTED_STATE::STARTED_IDLE;
 }
+
 void Mesh::sm_started() {
+	act_on_messages();
+
 	switch(statedata->started_state){
 	case STARTED_IDLE:
 		sm_started_idle();
 		break;
 	case STARTED_SEEKING_NEIGHBOURS:
-		sm_started_seeking_neighbours();
-		break;
-	case STARTED_CHOOSING_NEIGHBOURS:
-		sm_started_choosing_neighbours();
+		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_PING_PARENT:
-		sm_started_ping_parent();
-		break;
-	case STARTED_PING_WAITING_FOR_PARENT:
-		sm_started_ping_waiting_for_parent();
+		networkHandler->doPingParentReq();
+		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_PING_NEIGHBOURS:
-		sm_started_ping_neighbours();
-		break;
-	case STARTED_PING_WAITING_FOR_NEIGHBOURS:
-		sm_started_ping_waiting_for_neighbours();
+		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_SEEKING_PARENT:
-		sm_started_seeking_parent();
-		break;
-	case STARTED_CHOOSING_PARENT:
-		sm_started_choosing_parent();
+		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_CHECK_CHILDREN_KEEPALIVE_TIMERS:
-		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 //		sm_started_check_children_keepalive_timers();
+		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	}
 }
