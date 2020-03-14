@@ -149,7 +149,30 @@ public:
 		return 0;
 	}
 
+
+	void updateChildCounter(const struct net_address *node) {
+		struct node_data *child = findChild(node);
+		if(nullptr == child) return;
+		child->keepalive_count = TIMER_KEEPALIVE;
+	}
+
+	void updateParentCounter(const struct net_address *node) {
+		if(!NetHelper::compare_net_address(node,&parent.mac)) return;
+		parent.keepalive_count = TIMER_KEEPALIVE;
+	}
+
 private:
+	struct node_data *findChild(const struct net_address *child)
+	{
+		struct node_data *nwd_child = childs;
+		for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_child) {
+			if(false == nwd_child->connected) continue;
+			if(!NetHelper::compare_net_address(child, &nwd_child->mac)) continue;
+			return nwd_child;
+		}
+		return nullptr;
+	}
+
 	static int getNewChildAddress(const struct net_address *parent, struct net_address *child, const int childId) {
 		if(parent->master) {
 			// Easy one

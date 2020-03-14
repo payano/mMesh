@@ -79,7 +79,7 @@ public:
 	void doRegisterToMasterReq(union mesh_internal_msg *msg);
 	void doNetworkAssignmentRsp(union mesh_internal_msg *msg);
 	void doDisconnectChildReq(struct node_data *node);
-
+	void doPingParentRsp(union mesh_internal_msg *msg);
 };
 
 } /* namespace mesh */

@@ -118,7 +118,7 @@ private:
 
 	void act_on_messages();
 
-	void sm_started_idle();
+	void change_started_state();
 	void sm_started(); /* Main started */
 
 	void sm_started_check_children_keepalive_timers();

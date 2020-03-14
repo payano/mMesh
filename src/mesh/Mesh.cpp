@@ -67,7 +67,6 @@ enum STARTED_STATE {
 	STARTED_SEEKING_NEIGHBOURS,
 	STARTED_PING_PARENT,
 	STARTED_PING_NEIGHBOURS,
-	STARTED_CHECK_CHILDREN_KEEPALIVE_TIMERS,
 };
 
 struct stateData {
@@ -216,12 +215,13 @@ void Mesh::sm_register_to_master_req(union mesh_internal_msg *msg)
 
 void Mesh::sm_ping_parent_req(union mesh_internal_msg *msg)
 {
-	(void)msg;
+	network->updateChildCounter(&msg->ping_parent_req.from);
+	networkHandler->doPingParentRsp(msg);
 }
 
 void Mesh::sm_ping_parent_rsp(union mesh_internal_msg *msg)
 {
-	(void)msg;
+	network->updateParentCounter(&msg->ping_parent_rsp.from);
 }
 
 
@@ -232,9 +232,9 @@ void Mesh::sm_master()
 
 	armTimer(100); // 10sec
 
-//	sm_started_check_children_keepalive_timers();
-//	decrease_timer_counters();
-//	decrease_nbs_timer();
+	sm_started_check_children_keepalive_timers();
+	decrease_timer_counters();
+	decrease_nbs_timer();
 }
 
 void Mesh::sm_init()
@@ -428,7 +428,6 @@ void Mesh::act_on_messages()
 	union mesh_internal_msg msg;
 //	int i = 0;
 	while(!network->queue_get(&msg)){
-		printf("%s: msgno: %d\n", getName(), msg.header.msgno);
 		switch(msg.header.msgno) {
 		case MSGNO::BROADCAST_ASSOCIATE_REQ:
 			printf("%s: BROADCAST_ASSOCIATE_REQ\n", getName());
@@ -437,19 +436,16 @@ void Mesh::act_on_messages()
 		case MSGNO::BROADCAST_NEIGHBOUR_REQ:
 			printf("%s: BROADCAST_NEIGHBOUR_REQ\n", getName());
 			break;
-		case MSGNO::BROADCAST_NEIGHBOUR_RSP:
-			printf("%s: BROADCAST_NEIGHBOUR_RSP\n", getName());
-			break;
 		case MSGNO::NETWORK_ASSIGNMENT_REQ:
 			printf("%s: NETWORK_ASSIGNMENT_REQ\n", getName());
 			sm_network_assignment_req(&msg);
 			break;
 		case MSGNO::REGISTER_TO_MASTER_REQ:
-			printf("%s: - REGISTER_TO_MASTER_REQ\n", getName());
+			printf("%s: REGISTER_TO_MASTER_REQ\n", getName());
 			sm_register_to_master_req(&msg);
 			break;
 		case MSGNO::PING_PARENT_REQ:
-			printf("%s: !!!PING_PARENT_REQ\n", getName());
+			printf("%s: PING_PARENT_REQ\n", getName());
 			sm_ping_parent_req(&msg);
 			break;
 		case MSGNO::PING_PARENT_RSP:
@@ -470,6 +466,7 @@ void Mesh::act_on_messages()
 			break;
 			/* Connected nodes will not do a req, therefore not get a response.
 			 */
+		case MSGNO::BROADCAST_NEIGHBOUR_RSP:
 		case MSGNO::BROADCAST_ASSOCIATE_RSP:
 		case MSGNO::NETWORK_ASSIGNMENT_RSP:
 		case MSGNO::REGISTER_TO_MASTER_RSP:
@@ -480,15 +477,8 @@ void Mesh::act_on_messages()
 	}
 }
 
-void Mesh::sm_started_idle()
+void Mesh::change_started_state()
 {
-	if(timerStarted) return;
-
-	armTimer(100); // 10sec
-
-	/* do more seldom */
-	statedata->started_state = STARTED_STATE::STARTED_CHECK_CHILDREN_KEEPALIVE_TIMERS;
-
 	// Prio
 	if(0 == timer_counter_ping_parent) {
 		statedata->started_state = STARTED_STATE::STARTED_PING_PARENT;
@@ -503,9 +493,6 @@ void Mesh::sm_started_idle()
 		statedata->started_state = STARTED_STATE::STARTED_SEEKING_NEIGHBOURS;
 		timer_counter_bc_nb = TIMER_COUNTER_BC_NB;
 	}
-	decrease_timer_counters();
-	decrease_parent_timer();
-	decrease_nbs_timer();
 }
 
 void Mesh::sm_started_check_children_keepalive_timers()
@@ -521,10 +508,8 @@ void Mesh::sm_started_check_children_keepalive_timers()
 
 void Mesh::sm_started() {
 	act_on_messages();
-
 	switch(statedata->started_state){
 	case STARTED_IDLE:
-		sm_started_idle();
 		break;
 	case STARTED_SEEKING_NEIGHBOURS:
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
@@ -539,11 +524,14 @@ void Mesh::sm_started() {
 	case STARTED_SEEKING_PARENT:
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
-	case STARTED_CHECK_CHILDREN_KEEPALIVE_TIMERS:
-//		sm_started_check_children_keepalive_timers();
-		statedata->started_state = STARTED_STATE::STARTED_IDLE;
-		break;
 	}
+
+	if(timerStarted) return;
+	armTimer(100); // 10sec
+	sm_started_check_children_keepalive_timers();
+	decrease_timer_counters();
+	decrease_nbs_timer();
+	change_started_state();
 }
 
 void Mesh::setPaired(bool val){network->mPaired = val;}
