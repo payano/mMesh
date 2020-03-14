@@ -100,7 +100,6 @@ private:
 
 	void sm_master();
 
-	void sm_broadcast_associate_req(union mesh_internal_msg *msg);
 	void sm_broadcast_associate_rsp(union mesh_internal_msg *msg);
 	void sm_network_assignment_req(union mesh_internal_msg *msg);
 	void sm_register_to_master_req(union mesh_internal_msg *msg);
@@ -121,7 +120,7 @@ private:
 	void change_started_state();
 	void sm_started(); /* Main started */
 
-	void sm_started_check_children_keepalive_timers();
+	void check_children_keepalive_timers();
 
 	void setPaired(bool val);
 
