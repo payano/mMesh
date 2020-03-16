@@ -1,23 +1,9 @@
-#
-This project is made in Eclipse, under Eclipse you can build the mMesh.
+![C/C++ CI](https://github.com/payano/mMesh/workflows/C/C++%20CI/badge.svg)
 
-To make googletest: 
-
-cd /libraries/googletest-release-1.10.0
-
-perhaps... if it complains:
+## This project uses cmake, therefore write:
 
 cmake -G "Unix Makefiles"
 
 make -j4
 
-you need google test archive files to be able to link the application.
-
-
-Also..
-
-Under Settings for the project in Eclipse, navigate to
-
-C/C++ Build -> Tool chain editor and choose your own.
-
-Then everything should be set...
+If you are a fan of Eclipse and want to use it for building the project, look at: https://marketplace.eclipse.org/content/cmake4eclipse
