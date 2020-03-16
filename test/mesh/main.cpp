@@ -22,37 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "gtest/gtest.h"
+#include "NodeTest.h"
 
-#include <stdint.h>
-#include "NetworkInterfaceSubscriber.h"
-#include "NetworkInterface.h"
-#include "Islands.h"
-namespace network {
+// Look in nodetest.h
 
-/* Dummy interface should have islands.h */
-class DummyNWInterface : public NetworkInterface {
-private:
-	std::list<island::Island *> islands;
-public:
-	DummyNWInterface(){}
-	virtual ~DummyNWInterface(){}
-	void addIsland(island::Island *island){islands.push_back(island);}
-	int init() override {return 0;}
-	void deinit() override {}
-	int start() override {return 0;}
-	int sendto(const struct net_address *dest, union mesh_internal_msg *msg) override {
-		for(island::Island *member : islands) {
-//			printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
-			member->sendMessage(dest, msg);
-		}
-		return 0;
-	}
-	void recv_from(union mesh_internal_msg *msg) override {
-//		printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
-		cb->network_recv(msg);
-	}
-};
+int main(int argc, char **argv) {
+       srand (time(0));
 
-} /* namespace network */
+      ::testing::InitGoogleTest(&argc, argv);
+      return RUN_ALL_TESTS();
+}
 
