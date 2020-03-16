@@ -1,0 +1,21 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cmake config
+      run: cmake -G "Unix Makefiles"
+    - name: make
+      run: make
+    - name: run googletest
+      run: ./test/mesh/meshTests
