@@ -25,6 +25,9 @@ SOFTWARE.
 #pragma once
 #include "Constants.h"
 #include "DataTypes.h"
+
+typedef	unsigned int		uint;
+
 namespace mesh {
 
 class NetworkData {
