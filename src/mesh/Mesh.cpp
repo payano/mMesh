@@ -381,7 +381,7 @@ void Mesh::decrease_parent_timer()
 
 void Mesh::decrease_nbs_timer()
 {
-	network->decrease_neighbour_timers(TIMER_DECREASE);
+	network->decrease_child_timers(TIMER_DECREASE);
 }
 
 void Mesh::act_on_messages()
@@ -439,6 +439,11 @@ void Mesh::act_on_messages()
 
 			/* Connected nodes will not do a req, therefore not get a response.
 			 */
+		case MSGNO::PING_NEIGHBOUR_RSP:
+			printf("%s: PING_NEIGHBOUR_RSP\n", getName());
+			break;
+
+		case MSGNO::PING_NEIGHBOUR_REQ:
 		case MSGNO::BROADCAST_NEIGHBOUR_RSP:
 		case MSGNO::BROADCAST_ASSOCIATE_RSP:
 		case MSGNO::NETWORK_ASSIGNMENT_RSP:
@@ -485,6 +490,8 @@ void Mesh::sm_started() {
 	case STARTED_IDLE:
 		break;
 	case STARTED_SEEKING_NEIGHBOURS:
+		printf("%s: STARTED_SEEKING_NEIGHBOURS\n", getName());
+		networkHandler->doSeekNeighbours();
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_PING_PARENT:
@@ -492,6 +499,8 @@ void Mesh::sm_started() {
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_PING_NEIGHBOURS:
+		printf("%s: STARTED_PING_NEIGHBOURS\n", getName());
+		networkHandler->doPingNeighbours();
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_SEEKING_PARENT:

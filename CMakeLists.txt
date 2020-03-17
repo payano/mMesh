@@ -5,6 +5,8 @@ find_package (Threads REQUIRED)
 
 add_subdirectory(test)
 
+set(CMAKE_CXX_FLAGS "-Wall -std=c++0x -pedantic -O2 -Werror")
+
 ############################################################
 # Create a library
 ############################################################

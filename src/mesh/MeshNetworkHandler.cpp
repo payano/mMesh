@@ -92,9 +92,19 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 //		printf("%s: DISCONNECT_CHILD_REQ\n", getName());
 		handle_disconnect_req(msg);
 		break;
-	case MSGNO::DISCONNECT_CHILD_RSP:
 	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
+		printf("%s: _ BROADCAST_NEIGHBOUR_REQ\n", mesh->getName());
+		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_RSP:
+		printf("%s: _ BROADCAST_NEIGHBOUR_RSP\n", mesh->getName());
+		break;
+	case MSGNO::PING_NEIGHBOUR_REQ:
+		printf("%s: _ PING_NEIGHBOUR_REQ\n", mesh->getName());
+		break;
+	case MSGNO::PING_NEIGHBOUR_RSP:
+		printf("%s: _ PING_NEIGHBOUR_RSP\n", mesh->getName());
+		break;
+	case MSGNO::DISCONNECT_CHILD_RSP:
 	case MSGNO::MESSAGE_REQ:
 	case MSGNO::MESSAGE_RSP:
 	case MSGNO::INVALID:
@@ -337,6 +347,24 @@ void MeshNetworkHandler::doPingParentRsp(union mesh_internal_msg *msg)
 	                            &network->mac);
 
 	nw->sendto(&rsp.ping_parent_rsp.to, &rsp);
+}
+
+void MeshNetworkHandler::doSeekNeighbours()
+{
+	union mesh_internal_msg msg;
+	msg.header.msgno = MSGNO::BROADCAST_NEIGHBOUR_REQ;
+	msg.header.hop_count = 0;
+	NetHelper::copy_net_address(&msg.ping_parent_req.from, &network->mac);
+	nw->sendto(&BROADCAST, &msg);
+}
+
+void MeshNetworkHandler::doPingNeighbours()
+{
+	union mesh_internal_msg msg;
+	msg.header.msgno = MSGNO::PING_NEIGHBOUR_REQ;
+	msg.header.hop_count = 0;
+	NetHelper::copy_net_address(&msg.ping_parent_req.from, &network->mac);
+	nw->sendto(&BROADCAST, &msg);
 }
 
 } /* namespace mesh */

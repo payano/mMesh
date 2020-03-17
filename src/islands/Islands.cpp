@@ -41,7 +41,12 @@ Island::Island() :
 		m_message_req(0),
 		m_message_rsp(0),
 		m_ping_parent_req(0),
-		m_ping_parent_rsp(0)
+		m_ping_parent_rsp(0),
+		m_disconnect_child_req(0),
+		m_disconnect_child_rsp(0),
+		m_ping_neighbour_req(0),
+		m_ping_neighbour_rsp(0)
+
  {
 	// TODO Auto-generated constructor stub
 
@@ -104,10 +109,16 @@ void Island::sendMessage(const struct net_address *to_addr,
 	case MSGNO::MESSAGE_RSP:
 		++m_message_rsp;
 		break;
-
+	case MSGNO::PING_NEIGHBOUR_REQ:
+		++m_ping_neighbour_req;
+		break;
+	case MSGNO::PING_NEIGHBOUR_RSP:
+		++m_ping_neighbour_rsp;
+		break;
 	}
 //	printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
 	switch(msg->header.msgno) {
+	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
 	case MSGNO::BROADCAST_ASSOCIATE_REQ: {
 		/* Avoid that the node with temporary address also
 		 * gets the broadcast message.
@@ -181,6 +192,11 @@ void Island::reset() {
 	m_message_rsp = 0;
 	m_ping_parent_req = 0;
 	m_ping_parent_rsp = 0;
+	m_disconnect_child_req = 0;
+	m_disconnect_child_rsp = 0;
+	m_ping_neighbour_req = 0;
+	m_ping_neighbour_rsp = 0;
+
 
 
 }

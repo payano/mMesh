@@ -80,6 +80,8 @@ public:
 	void doNetworkAssignmentRsp(union mesh_internal_msg *msg);
 	void doDisconnectChildReq(struct node_data *node);
 	void doPingParentRsp(union mesh_internal_msg *msg);
+	void doSeekNeighbours();
+	void doPingNeighbours();
 };
 
 } /* namespace mesh */

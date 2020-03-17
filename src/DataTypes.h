@@ -107,6 +107,8 @@ enum MSGNO {
 	REGISTER_TO_MASTER_RSP,
 	PING_PARENT_REQ,
 	PING_PARENT_RSP,
+	PING_NEIGHBOUR_REQ,
+	PING_NEIGHBOUR_RSP,
 	DISCONNECT_CHILD_REQ,
 	DISCONNECT_CHILD_RSP,
 	MESSAGE_REQ,
@@ -203,6 +205,18 @@ struct broadcast_neighbour_req {
 struct broadcast_neighbour_rsp {
 	struct header header;
 	struct net_address net_address;
+};
+
+struct ping_neighbour_req {
+	struct header header;
+	struct net_address from;
+	struct net_address to;
+};
+
+struct ping_neighbour_rsp {
+	struct header header;
+	struct net_address from;
+	struct net_address to;
 };
 
 struct message_req {
@@ -339,6 +353,8 @@ public:
 		case MSGNO::DISCONNECT_CHILD_RSP: return "DISCONNECT_CHILD_RSP";
 		case MSGNO::MESSAGE_REQ: return "MESSAGE_REQ";
 		case MSGNO::MESSAGE_RSP: return "MESSAGE_RSP";
+		case PING_NEIGHBOUR_REQ: return "PING_NEIGHBOUR_REQ";
+		case PING_NEIGHBOUR_RSP: return "PING_NEIGHBOUR_RSP";
 		}
 		return "MSGNO DOESN'T EXIST";
 	}
