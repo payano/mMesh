@@ -130,16 +130,16 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 		network->queue_add(msg);
 		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
-		printf("%s: _ BROADCAST_NEIGHBOUR_REQ\n", mesh->getName());
+//		printf("%s: _ BROADCAST_NEIGHBOUR_REQ\n", mesh->getName());
 		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_RSP:
-		printf("%s: _ BROADCAST_NEIGHBOUR_RSP\n", mesh->getName());
+//		printf("%s: _ BROADCAST_NEIGHBOUR_RSP\n", mesh->getName());
 		break;
 	case MSGNO::PING_NEIGHBOUR_REQ:
-		printf("%s: _ PING_NEIGHBOUR_REQ\n", mesh->getName());
+//		printf("%s: _ PING_NEIGHBOUR_REQ\n", mesh->getName());
 		break;
 	case MSGNO::PING_NEIGHBOUR_RSP:
-		printf("%s: _ PING_NEIGHBOUR_RSP\n", mesh->getName());
+//		printf("%s: _ PING_NEIGHBOUR_RSP\n", mesh->getName());
 		break;
 	case MSGNO::DISCONNECT_CHILD_RSP:
 	case MSGNO::MESSAGE_REQ:
@@ -213,7 +213,6 @@ int MeshNetworkHandler::doChooseParent()
 		return -1 ;
 	}
 
-	printf("%s: STARTING_CHOOSING_PARENT\n", mesh->getName());
 	union mesh_internal_msg rsp;
 	rsp.header.msgno = MSGNO::NETWORK_ASSIGNMENT_REQ;
 	rsp.header.hop_count = 0;
@@ -227,7 +226,6 @@ int MeshNetworkHandler::doChooseParent()
 
 void MeshNetworkHandler::doRegisterToMasterReq(union mesh_internal_msg *msg)
 {
-	printf("%s: STARTING_WAITING_FOR_PARENT\n", mesh->getName());
 	struct network_assignment_rsp *new_msg = &msg->assignment_rsp;
 	copy_data(&network->parent.mac, &new_msg->parent, sizeof(new_msg->parent));
 	copy_data(&network->mac, &new_msg->new_address,

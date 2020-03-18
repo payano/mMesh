@@ -306,9 +306,6 @@ void Mesh::sm_starting_waiting_for_master()
 	struct register_to_master_rsp *msg = &queue_msg.reg_master_rsp;
 	network->registeredToMaster = msg->status == STATUS::OK ? true : false;
 
-	printf("%s: Regged: %d\n", getName(), network->registeredToMaster);
-	printf("%s: STARTING_WAITING_FOR_MASTER\n", getName());
-
 	if(!network->registeredToMaster) {
 		statedata->starting_state = STARTING_STATE::STARTING_REGISTER_TO_MASTER;
 		return;
@@ -393,18 +390,18 @@ void Mesh::act_on_messages()
 	while(!network->queue_get(&msg)){
 		switch(msg.header.msgno) {
 		case MSGNO::BROADCAST_ASSOCIATE_REQ:
-			printf("%s: BROADCAST_ASSOCIATE_REQ\n", getName());
+//			printf("%s: BROADCAST_ASSOCIATE_REQ\n", getName());
 			networkHandler->doBroadcastAssociateRsp(&msg);
 			break;
 		case MSGNO::BROADCAST_NEIGHBOUR_REQ:
-			printf("%s: BROADCAST_NEIGHBOUR_REQ\n", getName());
+//			printf("%s: BROADCAST_NEIGHBOUR_REQ\n", getName());
 			break;
 		case MSGNO::NETWORK_ASSIGNMENT_REQ:
-			printf("%s: NETWORK_ASSIGNMENT_REQ\n", getName());
+//			printf("%s: NETWORK_ASSIGNMENT_REQ\n", getName());
 			networkHandler->doNetworkAssignmentRsp(&msg);
 			break;
 		case MSGNO::REGISTER_TO_MASTER_REQ:
-			printf("%s: REGISTER_TO_MASTER_REQ\n", getName());
+//			printf("%s: REGISTER_TO_MASTER_REQ\n", getName());
 			/* I think we need to talk to an external application,
 			 * and then respond back?
 			 * For now, we respond back, saying OK!
@@ -412,21 +409,21 @@ void Mesh::act_on_messages()
 			networkHandler->doRegisterToMasterRsp(&msg);
 			break;
 		case MSGNO::PING_PARENT_REQ:
-			printf("%s: PING_PARENT_REQ\n", getName());
+//			printf("%s: PING_PARENT_REQ\n", getName());
 			network->updateChildCounter(&msg.ping_parent_req.from);
 			networkHandler->doPingParentRsp(&msg);
 			break;
 		case MSGNO::PING_PARENT_RSP:
-			printf("%s: PING_PARENT_RSP\n", getName());
+//			printf("%s: PING_PARENT_RSP\n", getName());
 			network->updateParentCounter(&msg.ping_parent_rsp.from);
 			break;
 		case MSGNO::DISCONNECT_CHILD_REQ:
 			/* Implementation mising */
-			printf("%s: DISCONNECT_CHILD_REQ\n", getName());
+//			printf("%s: DISCONNECT_CHILD_REQ\n", getName());
 			break;
 		case MSGNO::DISCONNECT_CHILD_RSP:
 			/* Implementation mising */
-			printf("%s: DISCONNECT_CHILD_RSP\n", getName());
+//			printf("%s: DISCONNECT_CHILD_RSP\n", getName());
 			break;
 		case MSGNO::MESSAGE_REQ:
 			/* Implementation mising */
@@ -440,7 +437,7 @@ void Mesh::act_on_messages()
 			/* Connected nodes will not do a req, therefore not get a response.
 			 */
 		case MSGNO::PING_NEIGHBOUR_RSP:
-			printf("%s: PING_NEIGHBOUR_RSP\n", getName());
+//			printf("%s: PING_NEIGHBOUR_RSP\n", getName());
 			break;
 
 		case MSGNO::PING_NEIGHBOUR_REQ:
@@ -490,7 +487,7 @@ void Mesh::sm_started() {
 	case STARTED_IDLE:
 		break;
 	case STARTED_SEEKING_NEIGHBOURS:
-		printf("%s: STARTED_SEEKING_NEIGHBOURS\n", getName());
+//		printf("%s: STARTED_SEEKING_NEIGHBOURS\n", getName());
 		networkHandler->doSeekNeighbours();
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
@@ -499,7 +496,7 @@ void Mesh::sm_started() {
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;
 	case STARTED_PING_NEIGHBOURS:
-		printf("%s: STARTED_PING_NEIGHBOURS\n", getName());
+//		printf("%s: STARTED_PING_NEIGHBOURS\n", getName());
 		networkHandler->doPingNeighbours();
 		statedata->started_state = STARTED_STATE::STARTED_IDLE;
 		break;

@@ -13,7 +13,7 @@ for ((i = 0 ; i < ${TIMES} ; i++));
 do
 	echo "Iteration: ${i}"
 	echo "Bad runs: ${ERR_CNT}"
-	./Debug/alarma.exe
+	./test/mesh/meshTests
 	ERR=$?
 	if [ $ERR -ne 0 ]; then
 		ERR_CNT=$((ERR_CNT+1))
