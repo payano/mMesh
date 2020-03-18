@@ -59,15 +59,6 @@ public:
 	int getSubnetToChild(struct net_address *address);
 
 	void network_recv(union mesh_internal_msg *msg) override;
-	void handle_associate_rsp(union mesh_internal_msg *msg);
-	void handle_associate_req(union mesh_internal_msg *msg);
-	void handle_network_assignment_req(union mesh_internal_msg *msg);
-	void handle_network_assignment_rsp(union mesh_internal_msg *msg);
-	void handle_register_to_master_req(union mesh_internal_msg *msg);
-	void handle_register_to_master_rsp(union mesh_internal_msg *msg);
-	void handle_ping_parent_req(union mesh_internal_msg *msg);
-	void handle_ping_parent_rsp(union mesh_internal_msg *msg);
-	void handle_disconnect_req(union mesh_internal_msg *msg);
 
 	/* Mesh related */
 	void doBroadcastAssociateReq();

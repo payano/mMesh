@@ -51,39 +51,43 @@ struct net_address {
 
 static constexpr int macaddr_sz(sizeof(struct net_address));
 
-constexpr struct net_address MASTER = {
+static constexpr struct net_address MASTER = {
                                        0, // broadcast
                                        1, // master
                                        0, // gen_addr
                                        0, // unused1
                                        0, // unused2
-                                       0, // bits 0
-                                       0, // bits 1
-                                       0, // bits 2
-                                       0, // bits 3
-                                       0, // bits 4
-                                       0, // bits 5
-                                       0, // bits 6
-                                       0, // bits 7
-                                       0, // bits 8
-                                       0, // host addr
+                                       {
+                                        {0}, // bits 0
+                                        {0}, // bits 1
+                                        {0}, // bits 2
+                                        {0}, // bits 3
+                                        {0}, // bits 4
+                                        {0}, // bits 5
+                                        {0}, // bits 6
+                                        {0}, // bits 7
+                                        {0}  // bits 8
+                                       },
+                                        0 // host addr
 };
 
-constexpr struct net_address BROADCAST = {1, // broadcast
+static constexpr struct net_address BROADCAST = {1, // broadcast
                                           0, // master
                                           0, // gen_addr
                                           0, // unused1
                                           0, // unused2
-                                          0, // bits 0
-                                          0, // bits 1
-                                          0, // bits 2
-                                          0, // bits 3
-                                          0, // bits 4
-                                          0, // bits 5
-                                          0, // bits 6
-                                          0, // bits 7
-                                          0, // bits 8
-                                          0, // host addr
+                                          {
+                                           {0}, // bits 0
+                                           {0}, // bits 1
+                                           {0}, // bits 2
+                                           {0}, // bits 3
+                                           {0}, // bits 4
+                                           {0}, // bits 5
+                                           {0}, // bits 6
+                                           {0}, // bits 7
+                                           {0}  // bits 8
+                                          },
+                                           0 // host addr
 };
 
 struct node_data {

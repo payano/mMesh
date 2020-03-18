@@ -63,34 +63,70 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 
 	switch(msg->header.msgno) {
 	case MSGNO::BROADCAST_ASSOCIATE_REQ:
-		handle_associate_req(msg);
+		if(false == network->mPaired || network->pairedChildren >= CHILDREN_SZ) {
+			return;
+		}
+		network->queue_add(msg);
 		break;
 	case MSGNO::BROADCAST_ASSOCIATE_RSP:
-		handle_associate_rsp(msg);
+		network->queue_add(msg);
 		break;
 	case MSGNO::NETWORK_ASSIGNMENT_REQ:
-		handle_network_assignment_req(msg);
+		network->queue_add(msg);
 		break;
 	case MSGNO::NETWORK_ASSIGNMENT_RSP:
-		handle_network_assignment_rsp(msg);
+		network->queue_add(msg);
 		break;
 	case MSGNO::REGISTER_TO_MASTER_REQ:
-		handle_register_to_master_req(msg);
+		// Drop packet. not valid anymore.
+		msg->header.hop_count++;
+		if(msg->header.hop_count >= MAX_HOPS) {
+			return;
+		}
+		// I'm not master, pass it along
+		// Here we should do routing algorithm
+		if(!network->mac.master){
+			const struct net_address *dst;
+			dst = algorithm->getRouteForPacket(network, &MASTER);
+			nw->sendto(dst, msg);
+			return;
+		}
+		network->queue_add(msg);
 		break;
 	case MSGNO::REGISTER_TO_MASTER_RSP:
-		handle_register_to_master_rsp(msg);
+		// Drop packet. not valid anymore.
+		msg->header.hop_count++;
+		if(msg->header.hop_count >= MAX_HOPS) return;
+
+		// I'm not master, pass it along
+		// Here we should do routing algorithm
+		if(!NetHelper::compare_net_address(&network->mac,
+		                                   &msg->reg_master_rsp.destination)){
+			const struct net_address *dst = algorithm->getRouteForPacket(
+					network, &msg->reg_master_rsp.destination);
+			nw->sendto(dst, msg);
+			return;
+		}
+		network->queue_add(msg);
 		break;
 	case PING_PARENT_REQ:
-//		printf("%s: _ PING_PARENT_REQ\n", mesh->getName());
-		handle_ping_parent_req(msg);
+		// If it is our child, respond.
+		if(!algorithm->isChildOf(&network->mac, &msg->ping_parent_req.from))
+			return;
+		network->queue_add(msg);
 		break;
 	case PING_PARENT_RSP:
-//		printf("%s: PING_PARENT_RSP\n", getName());
-		handle_ping_parent_rsp(msg);
+		// Check that is ours
+		if(!NetHelper::compare_net_address(&network->mac, &msg->ping_parent_rsp.to))
+			return;
+		network->queue_add(msg);
 		break;
 	case MSGNO::DISCONNECT_CHILD_REQ:
-//		printf("%s: DISCONNECT_CHILD_REQ\n", getName());
-		handle_disconnect_req(msg);
+		//Check parent
+		if(!NetHelper::compare_net_address(&network->parent.mac,
+		                               &msg->disconnect_child_req.from)) return;
+
+		network->queue_add(msg);
 		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
 		printf("%s: _ BROADCAST_NEIGHBOUR_REQ\n", mesh->getName());
@@ -110,106 +146,6 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 	case MSGNO::INVALID:
 		break;
 	}
-}
-
-void MeshNetworkHandler::handle_associate_rsp(union mesh_internal_msg *msg) {
-//	printf("%s: BROADCAST_ASSOCIATE_RSP\n", mesh->getName());
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_associate_req(union mesh_internal_msg *msg){
-	if(false == network->mPaired || network->pairedChildren >= CHILDREN_SZ) {
-		return;
-	}
-//	printf("%s: BROADCAST_ASSOCIATE_REQ\n", mesh->getName());
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_network_assignment_req(union mesh_internal_msg *msg){
-//	printf("%s: NETWORK_ASSIGNMENT_REQ\n", mesh->getName());
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_network_assignment_rsp(union mesh_internal_msg *msg){
-//	printf("%s: NETWORK_ASSIGNMENT_RSP\n", mesh->getName());
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_register_to_master_req(union mesh_internal_msg *msg){
-	// Drop packet. not valid anymore.
-	msg->header.hop_count++;
-	if(msg->header.hop_count >= MAX_HOPS) {
-		return;
-	}
-
-	// I'm not master, pass it along
-	// Here we should do routing algorithm
-	if(!network->mac.master){
-		const struct net_address *dst;
-		dst = algorithm->getRouteForPacket(network, &MASTER);
-		nw->sendto(dst, msg);
-//		printf("%s: ROUTING REGISTER_TO_MASTER_REQ\n", mesh->getName());
-		return;
-	}
-
-//	printf("%s: REGISTER_TO_MASTER_REQ\n", mesh->getName());
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_register_to_master_rsp(union mesh_internal_msg *msg){
-
-	// Drop packet. not valid anymore.
-	msg->header.hop_count++;
-	if(msg->header.hop_count >= MAX_HOPS) return;
-
-	// I'm not master, pass it along
-	// Here we should do routing algorithm
-	if(!NetHelper::compare_net_address(&network->mac,
-	                                   &msg->reg_master_rsp.destination)){
-		const struct net_address *dst = algorithm->getRouteForPacket(
-				network, &msg->reg_master_rsp.destination);
-		nw->sendto(dst, msg);
-
-//		printf("%s: me : ", mesh->getName());
-//		NetHelper::printf_address(&network->mac);
-//		printf("%s: ROUTING REGISTER_TO_MASTER_RSP\n", mesh->getName());
-//		printf("%s: HEADER DEST: ", mesh->getName());
-//		NetHelper::printf_address(&msg->reg_master_rsp.destination);
-//		printf("%s: ROUTING DST: ", mesh->getName());
-//		NetHelper::printf_address(dst);
-		return;
-	}
-
-	printf("%s: REGISTER_TO_MASTER_RSP\n", mesh->getName());
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_ping_parent_req(union mesh_internal_msg *msg)
-{
-	// If it is our child, respond.
-	if(!algorithm->isChildOf(&network->mac, &msg->ping_parent_req.from))
-		return;
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_ping_parent_rsp(union mesh_internal_msg *msg)
-{
-	// Check that is ours
-	if(!NetHelper::compare_net_address(&network->mac, &msg->ping_parent_rsp.to))
-		return;
-//	printf("%s: handle_ping_parent_rsp\n", mesh->getName());
-	network->queue_add(msg);
-}
-
-void MeshNetworkHandler::handle_disconnect_req(union mesh_internal_msg *msg)
-{
-
-	//Check parent
-	if(!NetHelper::compare_net_address(&network->parent.mac,
-	                               &msg->disconnect_child_req.from)) return;
-
-//	printf("%s: handle_ping_parent_rsp\n", mesh->getName());
-	network->queue_add(msg);
 }
 
 void MeshNetworkHandler::doBroadcastAssociateReq(){
