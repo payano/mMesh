@@ -188,7 +188,7 @@ TEST_F(NodeTest,StartNoAssignments){
 
 //		 Check if connected to parent
 		slave_to_master[i]->getParentAddress(&addr);
-		ASSERT_FALSE(NetHelper::compare_net_address(&MASTER, &addr));
+		ASSERT_FALSE(!cmp_data(&MASTER, &addr, sizeof(addr)));
 		ASSERT_FALSE(slave_to_master[i]->getPaired());
 	}
 }
