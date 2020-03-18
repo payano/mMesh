@@ -1,2 +1,6 @@
 /Debug/
 /build/
+.cproject
+.project
+.settings/
+.csettings/
