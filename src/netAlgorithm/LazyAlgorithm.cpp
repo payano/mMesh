@@ -54,7 +54,7 @@ const struct net_address *LazyAlgorithm::getRouteForPacket(const mesh::NetworkDa
 		if(true == childOf) {
 			return &nw->childs[i].mac;
 		}
-		if(true == NetHelper::compare_net_address(to, &nw->childs[i].mac)){
+		if(!cmp_data(to, &nw->childs[i].mac, sizeof(*to))){
 			return to;
 		}
 	}
@@ -81,7 +81,7 @@ int LazyAlgorithm::choose_parent_from_list(mesh::NetworkData *nw,
 		return -1;
 	}
 
-	NetHelper::copy_net_address(parent, &queue_msg.associate_rsp.parent_address);
+	copy_data(parent, &queue_msg.associate_rsp.parent_address, sizeof(*parent));
 
 	return 0;
 	}

@@ -42,8 +42,8 @@ public:
 	virtual int start() = 0;
 	virtual int sendto(const struct net_address *dest, union mesh_internal_msg *msg) = 0;
 	virtual void recv_from(union mesh_internal_msg *msg) = 0;
-	void setAddr(const struct net_address *addr) {NetHelper::copy_net_address(&mac, addr);}
-	void getAddr(struct net_address *addr) {NetHelper::copy_net_address(addr, &mac);}
+	void setAddr(const struct net_address *addr) {copy_data(&mac, addr, sizeof(*addr));}
+	void getAddr(struct net_address *addr) {copy_data(addr, &mac, sizeof(*addr));}
 	virtual ~NetworkInterface(){}
 };
 

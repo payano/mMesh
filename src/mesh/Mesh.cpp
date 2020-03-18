@@ -129,11 +129,11 @@ void Mesh::setName(char *name)
 }
 
 void Mesh::getParent(struct net_address *addr){
-	NetHelper::copy_net_address(addr, &network->parent.mac);
+	copy_data(addr, &network->parent.mac, sizeof(*addr));
 }
 
 bool Mesh::setTemporaryMacAddr(const struct net_address *mac){
-	NetHelper::copy_net_address(&network->mac, mac);
+	copy_data(&network->mac, mac, sizeof(*mac));
 	nw->setAddr(mac);
 	return true;
 }

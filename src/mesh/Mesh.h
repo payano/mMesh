@@ -45,7 +45,6 @@ class NetAlgorithmInterface;
 }
 
 union mesh_internal_msg;
-//struct networkData;
 struct net_address;
 
 namespace mesh {

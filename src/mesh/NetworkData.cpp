@@ -27,17 +27,15 @@ SOFTWARE.
 namespace mesh {
 
 NetworkData::NetworkData() {
-	NetHelper::clear_net_address(&mac);
-	NetHelper::clear_net_address(&parent.mac);
+	mem_clr(&mac, sizeof(mac));
+	mem_clr(&parent.mac, sizeof(parent.mac));
 	pairedChildren = 0;
 	registeredToMaster = false;
 	mPaired = false;
 	buffer_count = 0;
 
 	for(int i = 0 ; i < CHILDREN_SZ; ++i) {
-		NetHelper::clear_net_address(&childs[i].mac);
-		childs[i].keepalive_count = 0;
-		childs[i].connected = false;
+		mem_clr(&childs[i], sizeof(childs[i]));
 	}
 	// TODO Auto-generated constructor stub
 
@@ -52,7 +50,7 @@ void NetworkData::queue_clear(){buffer_count = 0;}
 int NetworkData::queue_add(union mesh_internal_msg *msg)
 {
 	if(buffer_count >= MSG_BUFFER) return -1;
-	NetHelper::copy_internal_msg(&queuedmsgs[buffer_count++], msg);
+	copy_data(&queuedmsgs[buffer_count++], msg, sizeof(*msg));
 	return 0;
 }
 
@@ -63,11 +61,11 @@ int NetworkData::queue_get(union mesh_internal_msg *msg)
 	 */
 	if(0 == buffer_count) return 1;
 
-	NetHelper::copy_internal_msg(msg, &queuedmsgs[0]);
+	copy_data(msg, &queuedmsgs[0], sizeof(*msg));
 
 	buffer_count--;
 	for(int i = 0 ; i < buffer_count; ++i) {
-		NetHelper::copy_internal_msg(&queuedmsgs[i], &queuedmsgs[i+1]);
+		copy_data(&queuedmsgs[i], &queuedmsgs[i+1], sizeof(queuedmsgs[i]));
 	}
 
 	return 0;
@@ -80,12 +78,12 @@ int NetworkData::remove_child_node(struct node_data *node,
 	for(int i = 0; i < CHILDREN_SZ; ++i, child++) {
 		// NEEDED?
 		if(false == child->connected) continue;
-		if(!NetHelper::compare_net_address(&node->mac, &child->mac)) continue;
-		NetHelper::clear_net_address(disband_node);
+		if(cmp_data(&node->mac, &child->mac, sizeof(node->mac))) continue;
+		mem_clr(disband_node, sizeof(*disband_node));
 
-		NetHelper::copy_net_address(disband_node, &child->mac);
+		copy_data(disband_node, &child->mac, sizeof(child->mac));
 		child->keepalive_count = 0;
-		NetHelper::clear_net_address(&child->mac);
+		mem_clr(&child->mac, sizeof(child->mac));
 		child->connected = false;
 		pairedChildren--;
 		return 0;
@@ -131,7 +129,7 @@ int NetworkData::iterateChilds(struct node_data **node)
 
 int NetworkData::generate_child_address(struct net_address *address)
 {
-	NetHelper::clear_net_address(address);
+	mem_clr(address, sizeof(*address));
 	int ret;
 	int child_addr = -1;
 	for(int i = 0; i < CHILDREN_SZ; ++i){
@@ -157,7 +155,7 @@ int NetworkData::generate_child_address(struct net_address *address)
 		return -1;
 	}
 	// Add it to parent neighbour list
-	NetHelper::copy_net_address(&childs[child_addr-1].mac, address);
+	copy_data(&childs[child_addr-1].mac, address, sizeof(*address));
 	return 0;
 }
 
@@ -171,7 +169,7 @@ void NetworkData::updateChildCounter(const struct net_address *node)
 
 void NetworkData::updateParentCounter(const struct net_address *node)
 {
-	if(!NetHelper::compare_net_address(node,&parent.mac)) return;
+	if(cmp_data(node,&parent.mac, sizeof(parent.mac))) return;
 	parent.keepalive_count = TIMER_KEEPALIVE;
 }
 
@@ -180,7 +178,7 @@ struct node_data *NetworkData::findChild(const struct net_address *child)
 	struct node_data *nwd_child = childs;
 	for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_child) {
 		if(false == nwd_child->connected) continue;
-		if(!NetHelper::compare_net_address(child, &nwd_child->mac)) continue;
+		if(cmp_data(child, &nwd_child->mac, sizeof(*child))) continue;
 		return nwd_child;
 	}
 	return nullptr;

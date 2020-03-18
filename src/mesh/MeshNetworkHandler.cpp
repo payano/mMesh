@@ -49,7 +49,7 @@ int MeshNetworkHandler::getSubnetToChild(struct net_address *address)
 {
 	int ret = 0;
 	// init subnet
-	NetHelper::clear_net_address(address);
+	mem_clr(address, sizeof(*address));
 
 	ret = network->generate_child_address(address);
 	return ret;
@@ -100,8 +100,8 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 
 		// I'm not master, pass it along
 		// Here we should do routing algorithm
-		if(!NetHelper::compare_net_address(&network->mac,
-		                                   &msg->reg_master_rsp.destination)){
+		if(cmp_data(&network->mac, &msg->reg_master_rsp.destination,
+		            sizeof(network->mac))){
 			const struct net_address *dst = algorithm->getRouteForPacket(
 					network, &msg->reg_master_rsp.destination);
 			nw->sendto(dst, msg);
@@ -117,14 +117,15 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 		break;
 	case PING_PARENT_RSP:
 		// Check that is ours
-		if(!NetHelper::compare_net_address(&network->mac, &msg->ping_parent_rsp.to))
+		if(cmp_data(&network->mac, &msg->ping_parent_rsp.to,
+		            sizeof(network->mac)))
 			return;
 		network->queue_add(msg);
 		break;
 	case MSGNO::DISCONNECT_CHILD_REQ:
 		//Check parent
-		if(!NetHelper::compare_net_address(&network->parent.mac,
-		                               &msg->disconnect_child_req.from)) return;
+		if(cmp_data(&network->parent.mac, &msg->disconnect_child_req.from,
+		            sizeof(network->parent.mac))) return;
 
 		network->queue_add(msg);
 		break;
@@ -152,7 +153,8 @@ void MeshNetworkHandler::doBroadcastAssociateReq(){
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::BROADCAST_ASSOCIATE_REQ;
 	msg.header.hop_count = 0;
-	NetHelper::copy_net_address(&msg.associate_req.from_addr, &network->mac);
+	copy_data(&msg.associate_req.from_addr, &network->mac,
+	          sizeof(msg.associate_req.from_addr));
 	nw->sendto(&BROADCAST, &msg);
 }
 
@@ -161,7 +163,8 @@ void MeshNetworkHandler::doBroadcastAssociateRsp(union mesh_internal_msg *msg)
 	union mesh_internal_msg rsp;
 	rsp.header.hop_count = 0;
 	rsp.header.msgno = MSGNO::BROADCAST_ASSOCIATE_RSP;
-	NetHelper::copy_net_address(&rsp.associate_rsp.parent_address, &network->mac);
+	copy_data(&rsp.associate_rsp.parent_address, &network->mac,
+	          sizeof(rsp.associate_rsp.parent_address));
 	nw->sendto(&msg->associate_req.from_addr, &rsp);
 }
 
@@ -171,7 +174,8 @@ void MeshNetworkHandler::doRegisterReq(){
 	msg.header.hop_count = 0;
 //	printf("%s: doing doRegisterReq: ", mesh->getName());
 //	NetHelper::printf_address(&network->mac);
-	NetHelper::copy_net_address(&msg.reg_master_req.host_addr, &network->mac);
+	copy_data(&msg.reg_master_req.host_addr, &network->mac,
+	          sizeof(msg.reg_master_req.host_addr));
 	nw->sendto(&network->parent.mac, &msg);
 }
 
@@ -180,7 +184,7 @@ void MeshNetworkHandler::doPingParentReq()
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::PING_PARENT_REQ;
 	msg.header.hop_count = 0;
-	NetHelper::copy_net_address(&msg.ping_parent_req.from, &network->mac);
+	copy_data(&msg.ping_parent_req.from, &network->mac, sizeof(network->mac));
 	nw->sendto(&network->parent.mac, &msg);
 }
 
@@ -192,8 +196,8 @@ void MeshNetworkHandler::doRegisterToMasterRsp(union mesh_internal_msg *msg)
 	rsp.reg_master_rsp.header.msgno = MSGNO::REGISTER_TO_MASTER_RSP;
 	rsp.reg_master_rsp.status = STATUS::OK;
 
-	NetHelper::copy_net_address(&rsp.reg_master_rsp.destination,
-	                            &msg->reg_master_req.host_addr);
+	copy_data(&rsp.reg_master_rsp.destination, &msg->reg_master_req.host_addr,
+	          sizeof(rsp.reg_master_rsp.destination));
 
 	dst = algorithm->getRouteForPacket(network,
 	                                   &rsp.reg_master_rsp.destination);
@@ -213,7 +217,8 @@ int MeshNetworkHandler::doChooseParent()
 	union mesh_internal_msg rsp;
 	rsp.header.msgno = MSGNO::NETWORK_ASSIGNMENT_REQ;
 	rsp.header.hop_count = 0;
-	NetHelper::copy_net_address(&rsp.associate_req.from_addr, &network->mac);
+	copy_data(&rsp.associate_req.from_addr, &network->mac,
+	          sizeof(network->mac));
 
 	nw->sendto(&parent, &rsp);
 	return 0;
@@ -224,8 +229,9 @@ void MeshNetworkHandler::doRegisterToMasterReq(union mesh_internal_msg *msg)
 {
 	printf("%s: STARTING_WAITING_FOR_PARENT\n", mesh->getName());
 	struct network_assignment_rsp *new_msg = &msg->assignment_rsp;
-	NetHelper::copy_net_address(&network->parent.mac, &new_msg->parent);
-	NetHelper::copy_net_address(&network->mac, &new_msg->new_address);
+	copy_data(&network->parent.mac, &new_msg->parent, sizeof(new_msg->parent));
+	copy_data(&network->mac, &new_msg->new_address,
+	          sizeof(new_msg->new_address));
 	nw->setAddr(&network->mac);
 	network->mPaired = true;
 }
@@ -245,7 +251,7 @@ void MeshNetworkHandler::doNetworkAssignmentRsp(union mesh_internal_msg *msg)
 		 */
 		return;
 	}
-	NetHelper::copy_net_address(&rsp.assignment_rsp.parent, &network->mac);
+	copy_data(&rsp.assignment_rsp.parent, &network->mac, sizeof(network->mac));
 	nw->sendto(&msg->assignment_req.from_address, &rsp);
 //	printf("SENDING TO: ");
 //	NetHelper::printf_address(&msg->assignment_req.from_address);
@@ -264,8 +270,9 @@ void MeshNetworkHandler::doDisconnectChildReq(struct node_data *node)
 	msg.header.hop_count = 0;
 	// We dont want a respond for this message.
 	msg.header.msgno = MSGNO::DISCONNECT_CHILD_REQ;
-	NetHelper::copy_net_address(&msg.disconnect_child_req.from, &network->mac);
-	NetHelper::copy_net_address(&msg.disconnect_child_req.to, &remove_node);
+	copy_data(&msg.disconnect_child_req.from, &network->mac,
+	          sizeof(network->mac));
+	copy_data(&msg.disconnect_child_req.to, &remove_node, sizeof(remove_node));
 	nw->sendto(&remove_node, &msg);
 }
 
@@ -277,10 +284,9 @@ void MeshNetworkHandler::doPingParentRsp(union mesh_internal_msg *msg)
 	rsp.reg_master_rsp.header.msgno = MSGNO::PING_PARENT_RSP;
 	rsp.reg_master_rsp.status = STATUS::OK;
 
-	NetHelper::copy_net_address(&rsp.ping_parent_rsp.to,
-	                            &msg->ping_parent_req.from);
-	NetHelper::copy_net_address(&rsp.ping_parent_rsp.from,
-	                            &network->mac);
+	copy_data(&rsp.ping_parent_rsp.to, &msg->ping_parent_req.from,
+	          sizeof(msg->ping_parent_req.from));
+	copy_data(&rsp.ping_parent_rsp.from, &network->mac, sizeof(network->mac));
 
 	nw->sendto(&rsp.ping_parent_rsp.to, &rsp);
 }
@@ -290,7 +296,7 @@ void MeshNetworkHandler::doSeekNeighbours()
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::BROADCAST_NEIGHBOUR_REQ;
 	msg.header.hop_count = 0;
-	NetHelper::copy_net_address(&msg.ping_parent_req.from, &network->mac);
+	copy_data(&msg.ping_parent_req.from, &network->mac, sizeof(network->mac));
 	nw->sendto(&BROADCAST, &msg);
 }
 
@@ -299,7 +305,7 @@ void MeshNetworkHandler::doPingNeighbours()
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::PING_NEIGHBOUR_REQ;
 	msg.header.hop_count = 0;
-	NetHelper::copy_net_address(&msg.ping_parent_req.from, &network->mac);
+	copy_data(&msg.ping_parent_req.from, &network->mac, sizeof(network->mac));
 	nw->sendto(&BROADCAST, &msg);
 }
 

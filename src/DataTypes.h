@@ -252,62 +252,69 @@ union mesh_internal_msg {
 	struct message_rsp             message_rsp;
 };
 
+template <typename T>
+void copy_data(T *to, const T *from, int sz) {
+	void *void_to = static_cast<void*>(to);
+	const void *void_from = static_cast<const void*>(from);
+	uint8_t *to_d = static_cast<uint8_t*>(void_to);
+	const uint8_t *from_d = static_cast<const uint8_t*>(void_from);
+	for(int i = 0 ; i < sz ; ++i){
+		*to_d = *from_d;
+		++to_d;
+		++from_d;
+	}
+}
+
+template <typename T>
+void mem_clr(T *buffer, int sz) {
+	void *void_buffer = static_cast<void*>(buffer);
+	uint8_t *buffer_d = static_cast<uint8_t*>(void_buffer);
+	for(int i = 0 ; i < sz ; ++i){
+		*buffer_d = 0;
+		++buffer_d;
+	}
+}
+
+template <typename T>
+int cmp_data(const T *first, const T *second, int sz) {
+	const void *void_first = static_cast<const void*>(first);
+	const void *void_second = static_cast<const void*>(second);
+	const uint8_t *first_d = static_cast<const uint8_t*>(void_first);
+	const uint8_t *second_d = static_cast<const uint8_t*>(void_second);
+	for(int i = 0 ; i < sz ; ++i){
+		if(*first_d != *second_d) return -1;
+		++first_d;
+		++second_d;
+	}
+	return 0;
+}
+
 class NetHelper{
 public:
 
+	/* Should be moved to a class*/
 	static bool check_timer_zero(struct node_data *node){
 		return node->keepalive_count == 0 ? true : false;
 	}
 
+	/* Should be moved to a class*/
 	static bool checkConnected(struct node_data *node){
 		return node->connected == true ? true : false;
 	}
 
-//	static struct node_data *findChild(struct networkData *nwd, const struct net_address *child){
-//		struct node_data *nwd_child = nwd->childs;
-//		for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_child) {
-//			if(false == nwd_child->connected) continue;
-//			if(!compare_net_address(child, &nwd_child->mac)) continue;
-//			return nwd_child;
-//		}
-//		return nullptr;
+//	static bool compare_net_address(const struct net_address *one, const struct net_address *two)
+//	{
+//		return cmp_data(one, two, sizeof(*one)) == 0 ? true : false;
 //	}
-
-	static bool compare_net_address(const struct net_address *one, const struct net_address *two)
-	{
-		if(one->broadcast != two->broadcast) return false;
-		if(one->master != two->master) return false;
-		if(one->gen_addr != two->gen_addr) return false;
-		for(int i = 0 ; i < NET_COUNT; ++i) {
-			if(one->nbs[i].net != two->nbs[i].net) return false;
-		}
-		if(one->host_addr != two->host_addr) return false;
-
-		return true;
-	}
-
-	static void copy_net_address(struct net_address *to, const struct net_address *from)
-	{
-		to->broadcast = from->broadcast;
-		to->master = from->master;
-		to->gen_addr = from->gen_addr;
-		for(int i = 0 ; i < NET_COUNT; ++i) {
-			to->nbs[i].net = from->nbs[i].net;
-		}
-		to->host_addr = from->host_addr;
-	}
-
-	static void clear_net_address(struct net_address *address) {
-		address->broadcast = 0;
-		address->master = 0;
-		address->gen_addr = 0;
-		address->unused1 = 0;
-		address->unused2 = 0;
-		for(int i = 0 ; i < NET_COUNT; ++i) {
-			address->nbs[i].net = 0;
-		}
-		address->host_addr = 0;
-	}
+//
+//	static void copy_net_address(struct net_address *to, const struct net_address *from)
+//	{
+//		copy_data(to, from, sizeof(*from));
+//	}
+//
+//	static void clear_net_address(struct net_address *address) {
+//		mem_clr(address, sizeof(*address));
+//	}
 
 	static void generate_temporary_address(struct net_address *address) {
 		address->broadcast = 0;
@@ -363,19 +370,6 @@ public:
 		return "MSGNO DOESN'T EXIST";
 	}
 
-	static int copy_internal_msg(union mesh_internal_msg *to,
-	                             const union mesh_internal_msg *from) {
-		int sz = sizeof(*to);
-		void *void_to = static_cast<void*>(to);
-		const void *void_from = static_cast<const void*>(from);
-		uint8_t *uint8_to = static_cast<uint8_t *>(void_to);
-		const uint8_t *uint8_from = static_cast<const uint8_t *>(void_from);
-
-		for(int i = 0 ; i < sz ; ++i){
-			uint8_to[i] = uint8_from[i];
-		}
-		return 0;
-	}
 
 	static uint8_t generate_number(int max_number){
 		(void) max_number;
