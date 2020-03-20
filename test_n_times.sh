@@ -22,4 +22,8 @@ done
 
 echo "RUN TIMES: ${TIMES}"
 echo "ERRORS: $ERR_CNT"
-
+if [ $ERR_CNT -gt 0 ];
+then
+	exit 1
+fi
+exit 0
