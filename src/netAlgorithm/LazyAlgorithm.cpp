@@ -28,7 +28,7 @@ SOFTWARE.
 
 namespace NetAlgorithm {
 
-LazyAlgorithm::LazyAlgorithm() {
+LazyAlgorithm::LazyAlgorithm() : rank(2){
 	// TODO Auto-generated constructor stub
 
 }
@@ -98,5 +98,68 @@ int LazyAlgorithm::isChildOf(const struct net_address *parent,
 	}
 	return false;
 }
-} /* namespace NetAlgorithm */
 
+void LazyAlgorithm::set_minimum_rank(int rank) {this->rank = rank;}
+
+int LazyAlgorithm::get_address_depth(const struct net_address *nb_address)
+{
+	if(0x1 == nb_address->master) return 0;
+
+	for(int i = 0; i < NET_COUNT; ++i)
+		if(nb_address->nbs[i].net == 0x0) return i;
+
+	return NET_COUNT;
+}
+
+int LazyAlgorithm::get_common_ancestor(const struct net_address *mac,
+                                       const struct net_address *nb_address)
+{
+	// Common ancestor is master
+	if(mac->nbs[0].net != nb_address->nbs[0].net) return 0;
+
+	for(int i = 1; i <= NET_COUNT ; ++i) {
+		if(mac->nbs[i].net != nb_address->nbs[i].net) return i;
+	}
+
+	return NET_COUNT;
+}
+
+
+int LazyAlgorithm::evaluate_nb_address(mesh::NetworkData *nw,
+                                       const struct net_address *nb_address)
+{
+	if(nw->pairedNeighbours == NEIGHBOUR_SZ) return 0;
+
+	// Sort out which level we are.
+	int our_level = get_address_depth(&nw->mac);
+	// Sort out which level nb_address is.
+	int nb_level = get_address_depth(nb_address);
+	// Get common ancestor
+	int ancestor = get_common_ancestor(&nw->mac, nb_address);
+
+	// Algorithm is:
+	int rank = our_level + nb_level - 2 * ancestor;
+
+	if(rank <= this->rank) return 0;
+
+	/* 1 means that this node should be added.
+	* if there is space left in the neighbour list.
+	* We could also check if we want to overwrite another node with lower rank.
+	* But this is the lazy algorithm, we are not a smart one, just a lazy one.
+	*/
+
+	for(int i = 0; i < NEIGHBOUR_SZ; ++i) {
+		if(nw->neighbours[i].connected) continue;
+
+		copy_data(&nw->neighbours[nw->pairedNeighbours].mac, nb_address,
+		          sizeof(*nb_address));
+		nw->neighbours[i].connected = true;
+		nw->pairedNeighbours++;
+		return 1;
+	}
+
+	// should never occur
+	return 0;
+}
+
+} /* namespace NetAlgorithm */

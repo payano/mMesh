@@ -26,21 +26,24 @@ SOFTWARE.
 #include "Constants.h"
 #include "DataTypes.h"
 
-typedef	unsigned int		uint;
+using uint = unsigned int;
 
 namespace mesh {
 
 class NetworkData {
-public:
-	int pairedChildren;
-	bool mPaired;
-	bool registeredToMaster;
-	struct node_data childs[CHILDREN_SZ];
-	struct node_data parent;
-	net_address mac;
+private:
 	union mesh_internal_msg queuedmsgs[MSG_BUFFER];
 	int buffer_count;
 public:
+	int pairedChildren;
+	int pairedNeighbours;
+	bool mPaired;
+	bool registeredToMaster;
+	struct node_data childs[CHILDREN_SZ];
+	struct node_data neighbours[NEIGHBOUR_SZ];
+	struct node_data parent;
+	net_address mac;
+
 	NetworkData();
 	virtual ~NetworkData();
 

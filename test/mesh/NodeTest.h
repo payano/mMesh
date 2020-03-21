@@ -350,33 +350,33 @@ TEST_F(NodeTest,Associate2Islands){
 
 }
 
-//TEST_F(NodeTest,SeekNBAndParents){
-//	struct net_address addr;
-//	std::cout << "TESTING SlaveSendRegister2Master" << std::endl;
-//	std::cout << "Setting master" << std::endl;
-//	master->setMaster();
-//	master->startThread();
-//
-//	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->startThread();}
-//
-//	std::this_thread::sleep_for(std::chrono::milliseconds(3*STARTUP_TIME_MS));
-//
-//	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->stopThread();}
-//
-//	printf("\nIslands statistics (BC = Broadcast msg): \n");
-//	for(int i = 0; i < 1 ; ++i){
-//		printf("Island[%d]\n", i);
-//		islands[i].printStatistics();
-//	}
-//
-//		printf("---- Slaves to master ----\n");
-//		for(int i = 0; i < SLAVE_TO_MASTER ; i++) {
-//			printf("%7s : ", slave_to_master[i]->getName());
-//			slave_to_master[i]->getAddr(&addr);
-//			NetHelper::printf_address(&addr);
-//			ASSERT_TRUE(slave_to_master[i]->getPaired());
-//			ASSERT_TRUE(slave_to_master[i]->getRegisteredToMaster());
-//		}
-//}
+TEST_F(NodeTest,SeekNBAndParents){
+	struct net_address addr;
+	std::cout << "TESTING SlaveSendRegister2Master" << std::endl;
+	std::cout << "Setting master" << std::endl;
+	master->setMaster();
+	master->startThread();
+
+	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->startThread();}
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(3*STARTUP_TIME_MS));
+
+	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->stopThread();}
+
+	printf("\nIslands statistics (BC = Broadcast msg): \n");
+	for(int i = 0; i < 1 ; ++i){
+		printf("Island[%d]\n", i);
+		islands[i].printStatistics();
+	}
+
+		printf("---- Slaves to master ----\n");
+		for(int i = 0; i < SLAVE_TO_MASTER ; i++) {
+			printf("%7s : ", slave_to_master[i]->getName());
+			slave_to_master[i]->getAddr(&addr);
+			NetHelper::printf_address(&addr);
+			ASSERT_TRUE(slave_to_master[i]->getPaired());
+			ASSERT_TRUE(slave_to_master[i]->getRegisteredToMaster());
+		}
+}
 
 }

@@ -30,6 +30,7 @@ NetworkData::NetworkData() {
 	mem_clr(&mac, sizeof(mac));
 	mem_clr(&parent.mac, sizeof(parent.mac));
 	pairedChildren = 0;
+	pairedNeighbours = 0;
 	registeredToMaster = false;
 	mPaired = false;
 	buffer_count = 0;

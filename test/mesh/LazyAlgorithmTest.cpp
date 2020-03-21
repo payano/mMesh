@@ -22,16 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "gtest/gtest.h"
-#include "NodeTest.h"
-#include "LazyAlgorithmTest.h"
+//#include "LazyAlgorithmTest.h"
 
-// Look in nodetest.h
+//namespace NetAlgorithm {
 
-int main(int argc, char **argv) {
-       srand (time(0));
+//LazyAlgorithmTest::LazyAlgorithmTest() {
+//	// TODO Auto-generated constructor stub
+//
+//}
+//
+//LazyAlgorithmTest::~LazyAlgorithmTest() {
+//	// TODO Auto-generated destructor stub
+//}
 
-      ::testing::InitGoogleTest(&argc, argv);
-      return RUN_ALL_TESTS();
-}
-
+//} /* namespace NetAlgorithm */

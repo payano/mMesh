@@ -29,7 +29,8 @@ namespace mesh {
 class NetworkData;
 }
 namespace NetAlgorithm {
-class LazyAlgorithm : public NetAlgorithmInterface{
+class LazyAlgorithm : public NetAlgorithmInterface {
+	int rank;
 public:
 	LazyAlgorithm();
 	virtual ~LazyAlgorithm();
@@ -43,6 +44,13 @@ public:
 	                                  struct net_address *parent) override;
 	int isChildOf(const struct net_address *parent,
 	                      const struct net_address *child) override;
+	int evaluate_nb_address(mesh::NetworkData *nw,
+	                        const struct net_address *nb_address) override;
+	void set_minimum_rank(int rank) override;
+private:
+	int get_address_depth(const struct net_address *nb_address);
+	int get_common_ancestor(const struct net_address *mac,
+	                        const struct net_address *nb_address);
 };
 
 } /* namespace NetAlgorithm */

@@ -44,6 +44,9 @@ public:
 	                                    struct net_address *parent) = 0;
 	virtual int isChildOf(const struct net_address *parent,
 	                      const struct net_address *child) = 0;
+	virtual int evaluate_nb_address(mesh::NetworkData *nw,
+	                                const struct net_address *nb_address) = 0;
+	virtual void set_minimum_rank(int rank) = 0;
 	virtual ~NetAlgorithmInterface(){}
 };
 
