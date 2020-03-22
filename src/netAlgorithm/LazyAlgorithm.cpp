@@ -40,24 +40,39 @@ LazyAlgorithm::~LazyAlgorithm() {
 const struct net_address *LazyAlgorithm::getRouteForPacket(const mesh::NetworkData *nw,
                                                            const struct net_address *to)
 {
-	/* Check nb's */
-	if(1 == nw->mac.master) {
+	/* We can also involves costs for each route, but we are a lazy algorithm
+	 * and only showing a proof of concept for now.
+	 */
+
+	/* Check if we can take a shortcut with our neighbors */
+	for(int i = 0 ; i < NEIGHBOUR_SZ ; ++i){
+		if(!nw->neighbours[i].connected) continue;
+		bool nb_parent = is_child_of(&nw->neighbours[i].mac, to, false);
+		bool to_parent = is_child_of(to, &nw->neighbours[i].mac, false);
+		bool same_addr = !cmp_data(&nw->neighbours[i].mac, to, sizeof(*to));
+
+		if(nb_parent || to_parent || same_addr)
+			return &nw->neighbours[i].mac;
+	}
+
+	/* Check childs's */
+	if(0x1 == nw->mac.master) {
 		for(int i = 0 ; i < CHILDREN_SZ; ++i){
-			if(nw->childs[i].mac.nbs[0].net == to->nbs[0].net) {
+			if(nw->childs[i].mac.nbs[0].net == to->nbs[0].net)
 				return &nw->childs[i].mac;
-			}
 		}
 	}
 
 	for(int i = 0; i < nw->pairedChildren; ++i) {
-		bool childOf = isChildOf(&nw->childs[i].mac, to);
-		if(true == childOf) {
+		bool childOf = is_child_of(&nw->childs[i].mac, to);
+
+		if(true == childOf)
 			return &nw->childs[i].mac;
-		}
-		if(!cmp_data(to, &nw->childs[i].mac, sizeof(*to))){
+
+		if(!cmp_data(to, &nw->childs[i].mac, sizeof(*to)))
 			return to;
-		}
 	}
+
 	return &nw->parent.mac;
 }
 
@@ -82,18 +97,19 @@ int LazyAlgorithm::choose_parent_from_list(mesh::NetworkData *nw,
 	}
 
 	copy_data(parent, &queue_msg.associate_rsp.parent_address, sizeof(*parent));
-
 	return 0;
-	}
+}
 
-int LazyAlgorithm::isChildOf(const struct net_address *parent,
-                             const struct net_address *child)
+int LazyAlgorithm::is_child_of(const struct net_address *parent,
+                               const struct net_address *child,
+                               bool include_master)
 {
-	if(parent->master) return true; // all is childs to master
+	if(!include_master && parent->master) return false; // all is childs to master
+	if(parent->master)                    return true;
 
 	for(int i = 0; i < NET_COUNT; ++i) {
 		if(parent->nbs[i].net == child->nbs[i].net) continue;
-		if(parent->nbs[i].net == 0x0) {return true;}
+		if(parent->nbs[i].net == 0x0) return true;
 		break;
 	}
 	return false;
@@ -114,12 +130,8 @@ int LazyAlgorithm::get_address_depth(const struct net_address *nb_address)
 int LazyAlgorithm::get_common_ancestor(const struct net_address *mac,
                                        const struct net_address *nb_address)
 {
-	// Common ancestor is master
-	if(mac->nbs[0].net != nb_address->nbs[0].net) return 0;
-
-	for(int i = 1; i <= NET_COUNT ; ++i) {
+	for(int i = 0; i <= NET_COUNT ; ++i)
 		if(mac->nbs[i].net != nb_address->nbs[i].net) return i;
-	}
 
 	return NET_COUNT;
 }

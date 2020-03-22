@@ -42,8 +42,8 @@ public:
 	                                     union mesh_internal_msg *msg) override;
 	int choose_parent_from_list(mesh::NetworkData*nw,
 	                                  struct net_address *parent) override;
-	int isChildOf(const struct net_address *parent,
-	                      const struct net_address *child) override;
+	int is_child_of(const struct net_address *parent,
+	                const struct net_address *child, bool include_master=true) override;
 	int evaluate_nb_address(mesh::NetworkData *nw,
 	                        const struct net_address *nb_address) override;
 	void set_minimum_rank(int rank) override;

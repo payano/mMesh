@@ -278,7 +278,7 @@ void Mesh::sm_starting_waiting_for_parent()
 
 void Mesh::sm_starting_register_to_master()
 {
-	armTimer(400); /* 100 ms */
+	armTimer(300); /* 100 ms */
 	networkHandler->doRegisterReq();
 	statedata->starting_state = STARTING_STATE::STARTING_WAITING_FOR_MASTER;
 }

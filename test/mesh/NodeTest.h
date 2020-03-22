@@ -242,7 +242,7 @@ TEST_F(NodeTest,Associate2Islands){
 		slave_to_0_0_0_0_0_0_0_0_0[i]->startThread();
 	}
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(11*STARTUP_TIME_MS));
+	std::this_thread::sleep_for(std::chrono::milliseconds(16*STARTUP_TIME_MS));
 
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->stopThread();}
 	for(int i = 0 ; i < SLAVE_COUNT ; ++i){

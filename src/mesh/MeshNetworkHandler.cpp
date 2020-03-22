@@ -111,7 +111,7 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 		break;
 	case PING_PARENT_REQ:
 		// If it is our child, respond.
-		if(!algorithm->isChildOf(&network->mac, &msg->ping_parent_req.from))
+		if(!algorithm->is_child_of(&network->mac, &msg->ping_parent_req.from))
 			return;
 		network->queue_add(msg);
 		break;
