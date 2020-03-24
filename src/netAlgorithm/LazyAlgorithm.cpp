@@ -157,18 +157,32 @@ int LazyAlgorithm::evaluate_nb_address(mesh::NetworkData *nw,
 	/* 1 means that this node should be added.
 	* if there is space left in the neighbour list.
 	* We could also check if we want to overwrite another node with lower rank.
-	* But this is the lazy algorithm, we are not a smart one, just a lazy one.
+	* But this is the lazy algorithm, we§ are not a smart one, just a lazy one.
 	*/
 
+	/* need to check so it is not added already */
+	for(int i = 0 ; i < NEIGHBOUR_SZ ; i++) {
+		if(!nw->neighbours[i].connected) continue;
+		if(!cmp_data(nb_address, &nw->neighbours[i].mac, sizeof(*nb_address)))
+			return 0;
+	}
+//
+//	printf("ADDED NB!\n");
+//	printf("Mine:");
+//	NetHelper::printf_address(&nw->mac);
+//	printf("Their:");
+//	NetHelper::printf_address(nb_address);
 	for(int i = 0; i < NEIGHBOUR_SZ; ++i) {
 		if(nw->neighbours[i].connected) continue;
 
 		copy_data(&nw->neighbours[nw->pairedNeighbours].mac, nb_address,
 		          sizeof(*nb_address));
 		nw->neighbours[i].connected = true;
+		nw->neighbours[i].keepalive_count = TIMER_KEEPALIVE;
 		nw->pairedNeighbours++;
 		return 1;
 	}
+
 
 	// should never occur
 	return 0;

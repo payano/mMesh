@@ -141,6 +141,7 @@ bool Mesh::setTemporaryMacAddr(const struct net_address *mac){
 bool Mesh::getPaired(){ return network->mPaired;}
 void Mesh::setPaired(bool val){network->mPaired = val;}
 bool Mesh::getRegisteredToMaster() { return network->registeredToMaster;}
+int Mesh::getNeighbourCount() {return network->pairedNeighbours;}
 char *Mesh::getName() { return name;}
 
 void Mesh::timerCallback(int ms)
@@ -394,7 +395,12 @@ void Mesh::act_on_messages()
 			networkHandler->doBroadcastAssociateRsp(&msg);
 			break;
 		case MSGNO::BROADCAST_NEIGHBOUR_REQ:
-//			printf("%s: BROADCAST_NEIGHBOUR_REQ\n", getName());
+//			printf("%s:: BROADCAST_NEIGHBOUR_REQ\n", getName());
+//			ret = algorithm->evaluate_nb_address(network,
+//			                                     &msg.neighbour_req.from);
+//			// if added, we need to send a rsp.
+//			if(ret)
+			networkHandler->doNeighborRsp(&msg);
 			break;
 		case MSGNO::NETWORK_ASSIGNMENT_REQ:
 //			printf("%s: NETWORK_ASSIGNMENT_REQ\n", getName());
@@ -436,17 +442,23 @@ void Mesh::act_on_messages()
 
 			/* Connected nodes will not do a req, therefore not get a response.
 			 */
-		case MSGNO::PING_NEIGHBOUR_RSP:
-//			printf("%s: PING_NEIGHBOUR_RSP\n", getName());
-			break;
-
-		case MSGNO::PING_NEIGHBOUR_REQ:
 		case MSGNO::BROADCAST_NEIGHBOUR_RSP:
+//			printf("%s: BROADCAST_NEIGHBOUR_RSP\n", getName());
+			algorithm->evaluate_nb_address(network,
+			                               &msg.neighbour_rsp.net_address);
+			break;
+		case MSGNO::PING_NEIGHBOUR_REQ:
+//			printf("%s: PING_NEIGHBOUR_REQ!\n", getName());
+			networkHandler->doPingNeighbourRsp(&msg);
+			break;
+		case MSGNO::PING_NEIGHBOUR_RSP:
+			network->updateNeighbourCounter(&msg.ping_neighbour_rsp.from);
+			break;
 		case MSGNO::BROADCAST_ASSOCIATE_RSP:
 		case MSGNO::NETWORK_ASSIGNMENT_RSP:
 		case MSGNO::REGISTER_TO_MASTER_RSP:
 		case MSGNO::INVALID:
-			printf("%s: INVALID\n", getName());
+//			printf("%s: INVALID\n", getName());
 			break;
 		}
 	}
@@ -481,6 +493,22 @@ void Mesh::check_children_keepalive_timers()
 	statedata->started_state = STARTED_STATE::STARTED_IDLE;
 }
 
+void Mesh::check_neighbour_keepalive_timers()
+{
+	struct node_data *current = nullptr;
+	while(network->iterateNeighbours(&current)){
+		if(!NetHelper::checkConnected(current)) continue;
+		if(!NetHelper::check_timer_zero(current)) continue;
+		/* just disconnect the neighbour, we are not obliged to tell the nb
+		 */
+		current->connected = false;
+		current->keepalive_count = 0;
+		mem_clr(&current->mac, sizeof(current->mac));
+		network->pairedNeighbours--;
+	}
+	statedata->started_state = STARTED_STATE::STARTED_IDLE;
+}
+
 void Mesh::sm_started() {
 	act_on_messages();
 	switch(statedata->started_state){
@@ -510,6 +538,7 @@ void Mesh::sm_started() {
 	decrease_timer_counters();
 	decrease_nbs_timer();
 	check_children_keepalive_timers();
+	check_neighbour_keepalive_timers();
 	change_started_state();
 }
 

@@ -116,6 +116,7 @@ void Island::sendMessage(const struct net_address *to_addr,
 		++m_ping_neighbour_rsp;
 		break;
 	}
+
 //	printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
 	switch(msg->header.msgno) {
 	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
@@ -140,35 +141,16 @@ void Island::sendMessage(const struct net_address *to_addr,
 		for(node::Node* member : sendMembers){
 			struct net_address addr;
 			member->nw->getAddr(&addr);
-//			printf("S-----\n");
-//			printf("mem: %p\n", (void*) this);
-//			printf("MSGNO: %s\n", NetHelper::getMsgno(msg->header.msgno));
-//			printf("%s: addr: ", member->getName());
-//			NetHelper::printf_address(&addr);
-//			printf("to: ");
-//			NetHelper::printf_address(to_addr);
-//			printf("E-----\n");
-
 			member->nw->recv_from(msg);
 
 		}
 	}
 	break;
 	default:
-//		printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
 		for(node::Node* member : members){
 			struct net_address addr;
 			member->nw->getAddr(&addr);
 			if(!cmp_data(to_addr, &addr, sizeof(addr))) {
-//				printf("S-----\n");
-//				printf("mem: %p\n", (void*) this);
-//				printf("MSGNO: %s\n", NetHelper::getMsgno(msg->header.msgno));
-//				printf("%s: addr: ", member->getName());
-//				NetHelper::printf_address(&addr);
-//				printf("destination: ");
-//				NetHelper::printf_address(&msg->reg_master_rsp.destination);
-//				printf("E-----\n");
-//				printf("FILE: %s, FUNCTION: %s, LINE: %d\n", __FILE__, __FUNCTION__, __LINE__);
 				member->nw->recv_from(msg);
 			}
 		}

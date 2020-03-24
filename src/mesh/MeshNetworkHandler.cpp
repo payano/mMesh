@@ -131,15 +131,23 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_REQ:
 //		printf("%s: _ BROADCAST_NEIGHBOUR_REQ\n", mesh->getName());
+		if(network->registeredToMaster)
+			network->queue_add(msg);
 		break;
 	case MSGNO::BROADCAST_NEIGHBOUR_RSP:
 //		printf("%s: _ BROADCAST_NEIGHBOUR_RSP\n", mesh->getName());
+		if(network->registeredToMaster)
+			network->queue_add(msg);
 		break;
 	case MSGNO::PING_NEIGHBOUR_REQ:
+		if(network->registeredToMaster)
+			network->queue_add(msg);
 //		printf("%s: _ PING_NEIGHBOUR_REQ\n", mesh->getName());
 		break;
 	case MSGNO::PING_NEIGHBOUR_RSP:
 //		printf("%s: _ PING_NEIGHBOUR_RSP\n", mesh->getName());
+		if(network->registeredToMaster)
+			network->queue_add(msg);
 		break;
 	case MSGNO::DISCONNECT_CHILD_RSP:
 	case MSGNO::MESSAGE_REQ:
@@ -294,8 +302,18 @@ void MeshNetworkHandler::doSeekNeighbours()
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::BROADCAST_NEIGHBOUR_REQ;
 	msg.header.hop_count = 0;
-	copy_data(&msg.ping_parent_req.from, &network->mac, sizeof(network->mac));
+	copy_data(&msg.neighbour_req.from, &network->mac, sizeof(network->mac));
 	nw->sendto(&BROADCAST, &msg);
+}
+
+void MeshNetworkHandler::doNeighborRsp(union mesh_internal_msg *msg)
+{
+	union mesh_internal_msg rsp;
+	rsp.header.msgno = MSGNO::BROADCAST_NEIGHBOUR_RSP;
+	rsp.header.hop_count = 0;
+	copy_data(&rsp.neighbour_rsp.net_address, &network->mac,
+	          sizeof(network->mac));
+	nw->sendto(&msg->neighbour_req.from, &rsp);
 }
 
 void MeshNetworkHandler::doPingNeighbours()
@@ -303,8 +321,26 @@ void MeshNetworkHandler::doPingNeighbours()
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::PING_NEIGHBOUR_REQ;
 	msg.header.hop_count = 0;
-	copy_data(&msg.ping_parent_req.from, &network->mac, sizeof(network->mac));
-	nw->sendto(&BROADCAST, &msg);
+	for(int i = 0; i < NEIGHBOUR_SZ; ++i){
+		if(!network->neighbours[i].connected) continue;
+		copy_data(&msg.ping_neighbour_req.from, &network->mac,
+		          sizeof(network->mac));
+		copy_data(&msg.ping_neighbour_req.to, &network->neighbours[i].mac,
+		          sizeof(network->mac));
+		nw->sendto(&network->neighbours[i].mac, &msg);
+	}
+}
+
+void MeshNetworkHandler::doPingNeighbourRsp(union mesh_internal_msg *msg)
+{
+	union mesh_internal_msg rsp;
+	rsp.header.msgno = MSGNO::PING_NEIGHBOUR_RSP;
+	rsp.header.hop_count = 0;
+	copy_data(&rsp.ping_neighbour_rsp.from, &network->mac,
+	          sizeof(network->mac));
+	copy_data(&rsp.ping_neighbour_rsp.to, &msg->ping_neighbour_req.from,
+	          sizeof(msg->ping_neighbour_req.from));
+	nw->sendto(&msg->ping_neighbour_req.from, &rsp);
 }
 
 } /* namespace mesh */

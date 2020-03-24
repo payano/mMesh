@@ -33,7 +33,7 @@ static constexpr int PAYLOAD_SZ(32);
 
 static constexpr int TIMER_COUNTER_PING_NB(6);
 static constexpr int TIMER_COUNTER_PING_PARENT(6);
-static constexpr int TIMER_COUNTER_BC_NB(10);
+static constexpr int TIMER_COUNTER_BC_NB(20);
 static constexpr int TIMER_COUNTER_BC_PARENT(10);
 static constexpr int TIMER_KEEPALIVE(3000);
 static constexpr int TIMER_DECREASE(100);

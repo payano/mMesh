@@ -36,6 +36,8 @@ Node::Node(network::NetworkInterface *nw) : nw(nw), mThread(nullptr),
 		mThreadRunning(false) {
 	// Might want to use threads to really simulate a "stm32" or "Arduino" controller.
 	mesh = new mesh::Mesh(nw);
+	mThreadRunning = false;
+	paused = false;
 	char name[10] = {0,};
 	memset(name, '\0', 10);
 	snprintf(name, 10, "Node%d",this->nodeId);
@@ -67,6 +69,12 @@ void Node::addIsland(island::Island *island)
 	static_cast<network::DummyNWInterface*>(nw)->addIsland(island);
 }
 
+void Node::removeIsland(island::Island *island)
+{
+	// Ugly hack
+	static_cast<network::DummyNWInterface*>(nw)->removeIsland(island);
+}
+
 Node::~Node() {
 	if(mThread != nullptr) stopThread();
 	if(nullptr != mesh) delete mesh;
@@ -82,8 +90,8 @@ void Node::setMaster(){
 void Node::threadMain(){
 
 	while(mThreadRunning) {
-		mesh->run();
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		if(false == paused) mesh->run();
+		std::this_thread::sleep_for(std::chrono::milliseconds(40));
 
 	}
 }

@@ -59,12 +59,16 @@ public:
 	void decrease_child_timers(uint value);
 
 	int iterateChilds(struct node_data **node);
+	int iterateNeighbours(struct node_data **node);
 	int generate_child_address(struct net_address *address);
 	void updateChildCounter(const struct net_address *node);
 	void updateParentCounter(const struct net_address *node);
+	void updateNeighbourCounter(const struct net_address *node);
+
 
 private:
 	struct node_data *findChild(const struct net_address *child);
+	struct node_data *findNeighbour(const struct net_address *child);
 
 	static int getNewChildAddress(const struct net_address *parent,
 	                              struct net_address *child,

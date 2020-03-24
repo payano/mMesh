@@ -84,6 +84,7 @@ public:
 	bool setTemporaryMacAddr(const struct net_address *mac);
 	bool getPaired();
 	bool getRegisteredToMaster();
+	int getNeighbourCount();
 	char *getName();
 
 private:
@@ -120,6 +121,7 @@ private:
 	void sm_started(); /* Main started */
 
 	void check_children_keepalive_timers();
+	void check_neighbour_keepalive_timers();
 
 	void setPaired(bool val);
 

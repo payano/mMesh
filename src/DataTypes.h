@@ -204,6 +204,7 @@ struct disconnect_child_rsp {
 
 struct broadcast_neighbour_req {
 	struct header header;
+	struct net_address from;
 };
 
 struct broadcast_neighbour_rsp {
@@ -246,6 +247,8 @@ union mesh_internal_msg {
 	struct register_to_master_rsp  reg_master_rsp;
 	struct ping_parent_req         ping_parent_req;
 	struct ping_parent_rsp         ping_parent_rsp;
+	struct ping_neighbour_req      ping_neighbour_req;
+	struct ping_neighbour_rsp      ping_neighbour_rsp;
 	struct disconnect_child_req    disconnect_child_req;
 	struct disconnect_child_rsp    disconnect_child_rsp;
 	struct message_req             message_req;

@@ -72,7 +72,9 @@ public:
 	void doDisconnectChildReq(struct node_data *node);
 	void doPingParentRsp(union mesh_internal_msg *msg);
 	void doSeekNeighbours();
+	void doNeighborRsp(union mesh_internal_msg *msg);
 	void doPingNeighbours();
+	void doPingNeighbourRsp(union mesh_internal_msg *msg);
 };
 
 } /* namespace mesh */

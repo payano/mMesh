@@ -50,6 +50,7 @@ private:
 	static int nodeId;
 	std::thread *mThread;
 	bool mThreadRunning;
+	bool paused;
 	void setAddr();
 	void threadMain();
 public:
@@ -58,11 +59,15 @@ public:
 	void getAddr(struct net_address *address);
 
 	void addIsland(island::Island *island);
+	void removeIsland(island::Island *island);
 	virtual ~Node();
 
+	void pause(){paused = true;}
+	void unpause(){paused = false;}
 	void getParentAddress(struct net_address *addr) {mesh->getParent(addr);}
 	bool getPaired(void) { return mesh->getPaired(); }
 	bool getRegisteredToMaster(void) { return mesh->getRegisteredToMaster(); }
+	int getNeighbourCount(void) { return mesh->getNeighbourCount(); }
 	char *getName(void) { return mesh->getName();}
 
 	void setMaster();

@@ -34,9 +34,11 @@ NetworkData::NetworkData() {
 	registeredToMaster = false;
 	mPaired = false;
 	buffer_count = 0;
-
 	for(int i = 0 ; i < CHILDREN_SZ; ++i) {
 		mem_clr(&childs[i], sizeof(childs[i]));
+	}
+	for(int i = 0 ; i < NEIGHBOUR_SZ; ++i) {
+		mem_clr(&neighbours[i], sizeof(neighbours[i]));
 	}
 	// TODO Auto-generated constructor stub
 
@@ -60,7 +62,7 @@ int NetworkData::queue_get(union mesh_internal_msg *msg)
 	/* take first one, move all one stop the the left in the queue
 	 * for example: [1] -> [0]
 	 */
-	if(0 == buffer_count) return 1;
+	if(buffer_count <= 0) return 1;
 
 	copy_data(msg, &queuedmsgs[0], sizeof(*msg));
 
@@ -69,6 +71,7 @@ int NetworkData::queue_get(union mesh_internal_msg *msg)
 		copy_data(&queuedmsgs[i], &queuedmsgs[i+1], sizeof(queuedmsgs[i]));
 	}
 
+	queuedmsgs[buffer_count].header.msgno = MSGNO::INVALID;
 	return 0;
 }
 
@@ -128,6 +131,18 @@ int NetworkData::iterateChilds(struct node_data **node)
 	return *node == last ? 0 : 1;
 }
 
+int NetworkData::iterateNeighbours(struct node_data **node)
+{
+	/* one past last is okay, but not beyond that */
+	const struct node_data *last = &neighbours[NEIGHBOUR_SZ];
+	if(nullptr == *node){
+		*node = neighbours;
+		return 1;
+	}
+	++(*node);
+	return *node == last ? 0 : 1;
+}
+
 int NetworkData::generate_child_address(struct net_address *address)
 {
 	mem_clr(address, sizeof(*address));
@@ -174,6 +189,13 @@ void NetworkData::updateParentCounter(const struct net_address *node)
 	parent.keepalive_count = TIMER_KEEPALIVE;
 }
 
+void NetworkData::updateNeighbourCounter(const struct net_address *node)
+{
+	struct node_data *nb = findNeighbour(node);
+	if(nullptr == nb) return;
+	nb->keepalive_count = TIMER_KEEPALIVE;
+}
+
 struct node_data *NetworkData::findChild(const struct net_address *child)
 {
 	struct node_data *nwd_child = childs;
@@ -181,6 +203,17 @@ struct node_data *NetworkData::findChild(const struct net_address *child)
 		if(false == nwd_child->connected) continue;
 		if(cmp_data(child, &nwd_child->mac, sizeof(*child))) continue;
 		return nwd_child;
+	}
+	return nullptr;
+}
+
+struct node_data *NetworkData::findNeighbour(const struct net_address *neighbour)
+{
+	struct node_data *nwd_nb = neighbours;
+	for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_nb) {
+		if(false == nwd_nb->connected) continue;
+		if(cmp_data(neighbour, &nwd_nb->mac, sizeof(*neighbour))) continue;
+		return nwd_nb;
 	}
 	return nullptr;
 }
