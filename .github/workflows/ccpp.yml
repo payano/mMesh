@@ -18,4 +18,4 @@ jobs:
     - name: make
       run: make
     - name: run googletest
-      run: ./test_n_times.sh 10
+      run: ./test/mesh/meshTests --gtest_repeat=10

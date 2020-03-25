@@ -205,7 +205,6 @@ TEST_F(NodeTest,Assign5Nodes2Master){
 	std::this_thread::sleep_for(std::chrono::milliseconds(3*STARTUP_TIME_MS));
 
 	master->stopThread();
-
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {
 		ASSERT_TRUE(slave_to_master[i]->getRegisteredToMaster());
 		slave_to_master[i]->stopThread();
@@ -226,9 +225,9 @@ TEST_F(NodeTest,Associate2Islands){
 	std::cout << "TESTING SlaveSendRegister2Master" << std::endl;
 	std::cout << "Setting master" << std::endl;
 	master->setMaster();
+
+
 	master->startThread();
-
-
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->startThread();}
 	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
 		slave_to_0[i]->startThread();
@@ -244,6 +243,7 @@ TEST_F(NodeTest,Associate2Islands){
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(30*STARTUP_TIME_MS));
 
+	master->stopThread();
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->stopThread();}
 	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
 		slave_to_0[i]->stopThread();
@@ -257,11 +257,11 @@ TEST_F(NodeTest,Associate2Islands){
 		slave_to_0_0_0_0_0_0_0_0_0[i]->stopThread();
 	}
 
-	printf("\nIslands statistics (BC = Broadcast msg): \n");
-	for(int i = 0; i < ISLANDS ; ++i){
-		printf("Island[%d]\n", i);
-		islands[i].printStatistics();
-	}
+//	printf("\nIslands statistics (BC = Broadcast msg): \n");
+//	for(int i = 0; i < ISLANDS ; ++i){
+//		printf("Island[%d]\n", i);
+//		islands[i].printStatistics();
+//	}
 
 	master->getAddr(&addr);
 	printf("Master: ");
@@ -349,101 +349,121 @@ TEST_F(NodeTest,Associate2Islands){
 	}
 }
 
-TEST_F(NodeTest,SeekNBAndParents){
+TEST_F(NodeTest,SeekNBAndParentsAndDisconnect){
 	struct net_address addr;
-	std::cout << "TESTING SlaveSendRegister2Master" << std::endl;
+	std::cout << "TESTING SeekNBAndParents" << std::endl;
 	std::cout << "Setting master" << std::endl;
 	master->setMaster();
-	master->startThread();
 
+	master->startThread();
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->startThread();}
 	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
 		slave_to_0[i]->startThread();
 		slave_to_0_0[i]->startThread();
 		slave_to_0_0_0[i]->startThread();
 		slave_to_0_0_0_0[i]->startThread();
-		slave_to_0_0_0_0_0[i]->startThread();
+
 	}
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(8*STARTUP_TIME_MS));
+	std::this_thread::sleep_for(std::chrono::milliseconds(10*STARTUP_TIME_MS));
+	islands[1].registerToIsland(slave_to_0_0_0_0[0]);
+	slave_to_0_0_0_0[0]->addIsland(&islands[1]);
+	std::this_thread::sleep_for(std::chrono::milliseconds(10*STARTUP_TIME_MS));
 
-	islands[1].registerToIsland(slave_to_0_0_0_0_0[0]);
-	slave_to_0_0_0_0_0[0]->addIsland(&islands[1]);
+	printf("Checking that nb's >= 5\n");
+	ASSERT_GE(slave_to_0_0_0_0[0]->getNeighbourCount(),5);
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(5*STARTUP_TIME_MS));
+//	master->pause();
+//	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->pause();}
+//	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
+//		slave_to_0[i]->pause();
+//		slave_to_0_0[i]->pause();
+//		slave_to_0_0_0[i]->pause();
+//		slave_to_0_0_0_0[i]->pause();
+//	}
+//
+//	std::this_thread::sleep_for(std::chrono::milliseconds(10*STARTUP_TIME_MS));
+//	islands[1].unregisterToIsland(slave_to_0_0_0_0[0]);
+//	slave_to_0_0_0_0[0]->removeIsland(&islands[1]);
+//
+//	master->unpause();
+//	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->unpause();}
+//	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
+//		slave_to_0[i]->unpause();
+//		slave_to_0_0[i]->unpause();
+//		slave_to_0_0_0[i]->unpause();
+//		slave_to_0_0_0_0[i]->unpause();
+//	}
+//
+//	std::this_thread::sleep_for(std::chrono::milliseconds(10*STARTUP_TIME_MS));
+//
+//	printf("Checking all nb's disconnected\n");
+//	ASSERT_EQ(slave_to_0_0_0_0[0]->getNeighbourCount(),0);
 
+
+	master->stopThread();
 	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {slave_to_master[i]->stopThread();}
 	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
 		slave_to_0[i]->stopThread();
 		slave_to_0_0[i]->stopThread();
 		slave_to_0_0_0[i]->stopThread();
 		slave_to_0_0_0_0[i]->stopThread();
-		slave_to_0_0_0_0_0[i]->stopThread();
 	}
 
-	printf("\nIslands statistics (BC = Broadcast msg): \n");
-	for(int i = 0; i < 6 ; ++i){
-		printf("Island[%d]\n", i);
-		islands[i].printStatistics();
-	}
+//	std::this_thread::sleep_for(std::chrono::milliseconds(30*STARTUP_TIME_MS));
+//	printf("\nIslands statistics (BC = Broadcast msg): \n");
+//	for(int i = 0; i < ISLANDS ; ++i){
+//		printf("Island[%d]\n", i);
+//		islands[i].printStatistics();
+//	}
 
-//	printf("---- Slaves to master ----\n");
-	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {
-//		printf("%7s : ", slave_to_master[i]->getName());
-//		slave_to_master[i]->getAddr(&addr);
-//		NetHelper::printf_address(&addr);
-		ASSERT_TRUE(slave_to_master[i]->getPaired());
-		ASSERT_TRUE(slave_to_master[i]->getRegisteredToMaster());
-	}
-
-//	printf("---- Slaves to Node1 ----\n");
-	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
-//		printf("%7s : ", slave_to_0[i]->getName());
-//		slave_to_0[i]->getAddr(&addr);
-//		NetHelper::printf_address(&addr);
-		ASSERT_TRUE(slave_to_0[i]->getPaired());
-		ASSERT_TRUE(slave_to_0[i]->getRegisteredToMaster());
-	}
-
-//	printf("---- Slaves to Node6 ----\n");
-	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
-//		printf("%7s : ", slave_to_0_0[i]->getName());
-//		slave_to_0_0[i]->getAddr(&addr);
-//		NetHelper::printf_address(&addr);
-		ASSERT_TRUE(slave_to_0_0[i]->getPaired());
-		ASSERT_TRUE(slave_to_0_0[i]->getRegisteredToMaster());
-	}
-
-//	printf("---- Slaves to Node10 ----\n");
-	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
-//		printf("%7s : ", slave_to_0_0_0[i]->getName());
-//		slave_to_0_0_0[i]->getAddr(&addr);
-//		NetHelper::printf_address(&addr);
-		ASSERT_TRUE(slave_to_0_0_0[i]->getPaired());
-		ASSERT_TRUE(slave_to_0_0_0[i]->getRegisteredToMaster());
-	}
-
-//	printf("---- Slaves to Node14 ----\n");
-	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
-//		printf("%7s : ", slave_to_0_0_0_0[i]->getName());
-//		slave_to_0_0_0_0[i]->getAddr(&addr);
-//		NetHelper::printf_address(&addr);
-		ASSERT_TRUE(slave_to_0_0_0_0[i]->getPaired());
-		ASSERT_TRUE(slave_to_0_0_0_0[i]->getRegisteredToMaster());
-	}
-
-//	printf("---- Slaves to Node18 ----\n");
-	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
-//		printf("%7s : ", slave_to_0_0_0_0_0[i]->getName());
-//		slave_to_0_0_0_0_0[i]->getAddr(&addr);
-//		NetHelper::printf_address(&addr);
-		ASSERT_TRUE(slave_to_0_0_0_0_0[i]->getPaired());
-		ASSERT_TRUE(slave_to_0_0_0_0_0[i]->getRegisteredToMaster());
-	}
-
-	ASSERT_GE(slave_to_0_0_0_0_0[0]->getNeighbourCount(), 2);
-	printf("NB's: %s\n", slave_to_0_0_0_0_0[0]->getName());
-	printf("NB's: %d\n", slave_to_0_0_0_0_0[0]->getNeighbourCount());
+//	master->getAddr(&addr);
+////	printf("Master: ");
+////	NetHelper::printf_address(&addr);
+//
+////	printf("---- Slaves to master ----\n");
+//	for(int i = 0; i < SLAVE_TO_MASTER ; i++) {
+////		printf("%7s : ", slave_to_master[i]->getName());
+////		slave_to_master[i]->getAddr(&addr);
+////		NetHelper::printf_address(&addr);
+//		ASSERT_TRUE(slave_to_master[i]->getPaired());
+//		ASSERT_TRUE(slave_to_master[i]->getRegisteredToMaster());
+//	}
+//
+////	printf("---- Slaves to Node1 ----\n");
+//	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
+////		printf("%7s : ", slave_to_0[i]->getName());
+////		slave_to_0[i]->getAddr(&addr);
+////		NetHelper::printf_address(&addr);
+//		ASSERT_TRUE(slave_to_0[i]->getPaired());
+//		ASSERT_TRUE(slave_to_0[i]->getRegisteredToMaster());
+//	}
+//
+////	printf("---- Slaves to Node6 ----\n");
+//	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
+////		printf("%7s : ", slave_to_0_0[i]->getName());
+////		slave_to_0_0[i]->getAddr(&addr);
+////		NetHelper::printf_address(&addr);
+//		ASSERT_TRUE(slave_to_0_0[i]->getPaired());
+//		ASSERT_TRUE(slave_to_0_0[i]->getRegisteredToMaster());
+//	}
+//
+////	printf("---- Slaves to Node10 ----\n");
+//	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
+////		printf("%7s : ", slave_to_0_0_0[i]->getName());
+////		slave_to_0_0_0[i]->getAddr(&addr);
+////		NetHelper::printf_address(&addr);
+//		ASSERT_TRUE(slave_to_0_0_0[i]->getPaired());
+//		ASSERT_TRUE(slave_to_0_0_0[i]->getRegisteredToMaster());
+//	}
+//
+////	printf("---- Slaves to Node14 ----\n");
+//	for(int i = 0 ; i < SLAVE_COUNT ; ++i){
+////		printf("%7s : ", slave_to_0_0_0_0[i]->getName());
+////		slave_to_0_0_0_0[i]->getAddr(&addr);
+////		NetHelper::printf_address(&addr);
+//		ASSERT_TRUE(slave_to_0_0_0_0[i]->getPaired());
+//		ASSERT_TRUE(slave_to_0_0_0_0[i]->getRegisteredToMaster());
+//	}
 }
-
 }

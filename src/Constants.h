@@ -23,6 +23,29 @@ SOFTWARE.
 */
 
 #pragma once
+
+/* This is your applications delay timer,
+ * Your delay timer = 100 ms.
+ * RETRIGGER_TIMER = 100 - 10 [ms].
+ * Just in case if your application runs the timer somtimes with 99 ms
+ * Then mesh won't run for another 199 ms which would be bad.
+ * */
+static constexpr int RETRIGGER_TIMER(100);
+/* Counters and timers based on RETRIGGER_TIMER */
+static constexpr int REGISTER_TO_MASTER_TIMER(3*RETRIGGER_TIMER);
+static constexpr int DECREASE_TIMERS(RETRIGGER_TIMER-10);
+static constexpr int SEEKING_PARENT_TIMER(3*RETRIGGER_TIMER);
+static constexpr int REGISTER_TO_PARENT_TIMER(3*RETRIGGER_TIMER);
+
+/* Counters for retriggers */
+static constexpr int TIMER_COUNTER_PING_NB(10);
+static constexpr int TIMER_COUNTER_PING_PARENT(5);
+static constexpr int TIMER_COUNTER_BC_NB(20);
+static constexpr int TIMER_COUNTER_BC_PARENT(20);
+static constexpr int TIMER_KEEPALIVE(30);
+static constexpr int TIMER_DECREASE(1);
+
+/* General constants */
 static constexpr int CHILDREN_SZ(5);
 static constexpr int NEIGHBOUR_SZ(10);
 static constexpr int NUM_ADDRESSES(7); // 2^3
@@ -30,10 +53,3 @@ static constexpr int MSG_BUFFER(10);
 static constexpr int MAX_HOPS(12);
 static constexpr int NET_COUNT(9);
 static constexpr int PAYLOAD_SZ(32);
-
-static constexpr int TIMER_COUNTER_PING_NB(6);
-static constexpr int TIMER_COUNTER_PING_PARENT(6);
-static constexpr int TIMER_COUNTER_BC_NB(20);
-static constexpr int TIMER_COUNTER_BC_PARENT(10);
-static constexpr int TIMER_KEEPALIVE(3000);
-static constexpr int TIMER_DECREASE(100);

@@ -35,22 +35,32 @@ namespace network {
 class DummyNWInterface : public NetworkInterface {
 private:
 	std::list<island::Island *> islands;
+	bool muted;
 
 public:
-	DummyNWInterface(){}
+	DummyNWInterface() : muted(false){}
 	virtual ~DummyNWInterface(){}
 	void addIsland(island::Island *island){islands.push_back(island);}
 	void removeIsland(island::Island *island){islands.remove(island);}
 	int init() override {return 0;}
 	void deinit() override {}
 	int start() override {return 0;}
+
+	void mute() {
+		muted = true;
+	}
+	void unmute(){
+		muted = false;
+	}
 	int sendto(const struct net_address *dest, union mesh_internal_msg *msg) override {
+		if(muted) return 0;
 		for(island::Island *member : islands) {
 			member->sendMessage(dest, msg);
 		}
 		return 0;
 	}
 	void recv_from(union mesh_internal_msg *msg) override {
+		if(muted) return;
 		if(nullptr == cb) return;
 		cb->network_recv(msg);
 	}

@@ -31,21 +31,15 @@ namespace network {
 
 class Nrf24 : public NetworkInterface {
 protected:
-	void recv_from(union mesh_internal_msg *msg) override {
-		(void)msg;
-	}
-
 public:
-	Nrf24() {}
-	virtual ~Nrf24() {}
-	int init() override {return 0;}
-	void deinit() override {}
-	int start() override {return 0;}
-	int sendto(const struct net_address *dest, union mesh_internal_msg *msg) override {
-		(void)dest;
-		(void)msg;
-		return 0;
-	}
+	Nrf24();
+	virtual ~Nrf24();
+	int init() override;
+	void deinit() override;
+	int start() override;
+	int sendto(const struct net_address *dest, union mesh_internal_msg *msg) override;
+	void recv_from(union mesh_internal_msg *msg) override;
+
 };
 
 } /* namespace network */

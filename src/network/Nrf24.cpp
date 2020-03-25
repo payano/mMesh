@@ -21,3 +21,45 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#include "Nrf24.h"
+//#include "RF24.h"
+namespace network {
+
+Nrf24::Nrf24()
+{
+//	RF24 olle(1,1,1);
+//	olle.begin();
+}
+
+Nrf24::~Nrf24()
+{
+}
+
+int Nrf24::init()
+{
+	return 0;
+}
+
+void Nrf24::deinit()
+{
+
+}
+
+int Nrf24::start()
+{
+	return 0;
+}
+int Nrf24::sendto(const struct net_address *dest, union mesh_internal_msg *msg)
+{
+	(void)dest;
+	(void)msg;
+	return 0;
+}
+
+void Nrf24::recv_from(union mesh_internal_msg *msg)
+{
+	(void)msg;
+}
+
+
+}

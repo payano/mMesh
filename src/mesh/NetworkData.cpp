@@ -114,8 +114,19 @@ void NetworkData::decrease_child_timers(uint value)
 			continue;
 		}
 		nwd_child->keepalive_count -= value;
-//			printf_address(&nwd_child->mac);
-//			printf("KEEPALIVE: %d\n",nwd_child->keepalive_count);
+	}
+}
+
+void NetworkData::decrease_nb_timers(uint value)
+{
+	struct node_data *nwd_nb = neighbours;
+	for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_nb) {
+		if(false == nwd_nb->connected) continue;
+		if(nwd_nb->keepalive_count <= 0) {
+			nwd_nb->keepalive_count = 0;
+			continue;
+		}
+		nwd_nb->keepalive_count -= value;
 	}
 }
 

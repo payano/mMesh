@@ -100,12 +100,14 @@ Mesh::~Mesh() {
 	if(nullptr != mThread) {
 		mThread->join();
 		delete mThread;
+		mThread = nullptr;
 	}
 }
 
 void Mesh::setMaster() {
 	char name[] = "master";
 	setPaired(true);
+	network->registeredToMaster = true;
 	mSetMaster = true;
 	setName(name);
 	setTemporaryMacAddr(&MASTER);
@@ -195,11 +197,13 @@ void Mesh::sm_master()
 	act_on_messages();
 	if(timerStarted) return;
 
-	armTimer(100); // 10sec
+	armTimer(DECREASE_TIMERS);
 
 	decrease_timer_counters();
-	decrease_nbs_timer();
+	decrease_childs_timer();
+	decrease_nb_timer();
 	check_children_keepalive_timers();
+	check_neighbour_keepalive_timers();
 }
 
 void Mesh::sm_init()
@@ -220,7 +224,7 @@ void Mesh::sm_init()
 
 void Mesh::sm_starting_seeking_parent()
 {
-	armTimer(200); /* 100 ms */
+	armTimer(SEEKING_PARENT_TIMER);
 	statedata->starting_state = STARTING_STATE::STARTING_CHOOSING_PARENT;
 	networkHandler->doBroadcastAssociateReq();
 }
@@ -247,7 +251,7 @@ void Mesh::sm_starting_choosing_parent() {
 
 void Mesh::sm_starting_register_to_parent()
 {
-	armTimer(100); /* 100 ms */
+	armTimer(REGISTER_TO_PARENT_TIMER);
 	statedata->starting_state = STARTING_STATE::STARTING_WAITING_FOR_PARENT;
 }
 
@@ -279,7 +283,7 @@ void Mesh::sm_starting_waiting_for_parent()
 
 void Mesh::sm_starting_register_to_master()
 {
-	armTimer(300); /* 100 ms */
+	armTimer(REGISTER_TO_MASTER_TIMER);
 	networkHandler->doRegisterReq();
 	statedata->starting_state = STARTING_STATE::STARTING_WAITING_FOR_MASTER;
 }
@@ -298,6 +302,7 @@ void Mesh::sm_starting_waiting_for_master()
 	union mesh_internal_msg queue_msg;
 	network->queue_get(&queue_msg);
 	network->queue_clear();
+
 	if(MSGNO::REGISTER_TO_MASTER_RSP != queue_msg.header.msgno){
 		// Error
 		statedata->starting_state = STARTING_STATE::STARTING_REGISTER_TO_MASTER;
@@ -377,9 +382,14 @@ void Mesh::decrease_parent_timer()
 	network->decrease_parent_timer(TIMER_DECREASE);
 }
 
-void Mesh::decrease_nbs_timer()
+void Mesh::decrease_childs_timer()
 {
 	network->decrease_child_timers(TIMER_DECREASE);
+}
+
+void Mesh::decrease_nb_timer()
+{
+	network->decrease_nb_timers(TIMER_DECREASE);
 }
 
 void Mesh::act_on_messages()
@@ -534,9 +544,10 @@ void Mesh::sm_started() {
 	}
 
 	if(timerStarted) return;
-	armTimer(100); // 10sec
+	armTimer(DECREASE_TIMERS);
 	decrease_timer_counters();
-	decrease_nbs_timer();
+	decrease_childs_timer();
+	decrease_nb_timer();
 	check_children_keepalive_timers();
 	check_neighbour_keepalive_timers();
 	change_started_state();

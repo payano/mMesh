@@ -135,7 +135,8 @@ private:
 
 	void decrease_timer_counters();
 	void decrease_parent_timer();
-	void decrease_nbs_timer();
+	void decrease_childs_timer();
+	void decrease_nb_timer();
 	void init_timer_counters();
 	void clear_timer_counters();
 

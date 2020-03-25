@@ -60,6 +60,8 @@ public:
 
 	void addIsland(island::Island *island);
 	void removeIsland(island::Island *island);
+	void mute();
+	void unmute();
 	virtual ~Node();
 
 	void pause(){paused = true;}

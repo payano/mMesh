@@ -57,6 +57,7 @@ public:
 
 	void decrease_parent_timer(uint value);
 	void decrease_child_timers(uint value);
+	void decrease_nb_timers(uint value);
 
 	int iterateChilds(struct node_data **node);
 	int iterateNeighbours(struct node_data **node);

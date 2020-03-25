@@ -61,7 +61,7 @@ void Island::registerToIsland(node::Node *node){members.push_back(node);}
 void Island::unregisterToIsland(node::Node *node){members.remove(node);}
 
 void Island::sendMessage(const struct net_address *to_addr,
-                 union mesh_internal_msg *msg)
+                         union mesh_internal_msg *msg)
 {
 	switch(msg->header.msgno) {
 	case MSGNO::INVALID:

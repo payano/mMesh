@@ -32,11 +32,12 @@ namespace node {
 
 int Node::nodeId = 0;
 
-Node::Node(network::NetworkInterface *nw) : nw(nw), mThread(nullptr),
-		mThreadRunning(false) {
+Node::Node(network::NetworkInterface *nw) {
+	this->nw = nw;
+	mThread = nullptr;
+	mThreadRunning = false;
 	// Might want to use threads to really simulate a "stm32" or "Arduino" controller.
 	mesh = new mesh::Mesh(nw);
-	mThreadRunning = false;
 	paused = false;
 	char name[10] = {0,};
 	memset(name, '\0', 10);
@@ -75,6 +76,16 @@ void Node::removeIsland(island::Island *island)
 	static_cast<network::DummyNWInterface*>(nw)->removeIsland(island);
 }
 
+void Node::mute()
+{
+	static_cast<network::DummyNWInterface*>(nw)->mute();
+}
+void Node::unmute()
+{
+	static_cast<network::DummyNWInterface*>(nw)->unmute();
+
+}
+
 Node::~Node() {
 	if(mThread != nullptr) stopThread();
 	if(nullptr != mesh) delete mesh;
@@ -87,12 +98,11 @@ void Node::setMaster(){
 	mesh->setMaster();
 }
 
-void Node::threadMain(){
-
+void Node::threadMain()
+{
 	while(mThreadRunning) {
 		if(false == paused) mesh->run();
-		std::this_thread::sleep_for(std::chrono::milliseconds(40));
-
+		std::this_thread::sleep_for(std::chrono::milliseconds(RETRIGGER_TIMER));
 	}
 }
 

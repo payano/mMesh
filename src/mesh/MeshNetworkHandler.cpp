@@ -63,7 +63,7 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 
 	switch(msg->header.msgno) {
 	case MSGNO::BROADCAST_ASSOCIATE_REQ:
-		if(false == network->mPaired || network->pairedChildren >= CHILDREN_SZ) {
+		if(false == network->registeredToMaster || network->pairedChildren >= CHILDREN_SZ) {
 			return;
 		}
 		network->queue_add(msg);
@@ -96,7 +96,9 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 	case MSGNO::REGISTER_TO_MASTER_RSP:
 		// Drop packet. not valid anymore.
 		msg->header.hop_count++;
-		if(msg->header.hop_count >= MAX_HOPS) return;
+		if(msg->header.hop_count >= MAX_HOPS){
+			return;
+		}
 
 		// I'm not master, pass it along
 		// Here we should do routing algorithm
@@ -208,7 +210,7 @@ void MeshNetworkHandler::doRegisterToMasterRsp(union mesh_internal_msg *msg)
 	          sizeof(rsp.reg_master_rsp.destination));
 
 	dst = algorithm->getRouteForPacket(network,
-	                                   &rsp.reg_master_rsp.destination);
+	                                   &msg->reg_master_req.host_addr);
 	nw->sendto(dst, &rsp);
 }
 
