@@ -54,7 +54,7 @@ protected:
 	Node *slave_to_0_0_0_0_0_0_0_0_0[SLAVE_COUNT];
 	island::Island islands[ISLANDS];
 
-	virtual void SetUp() override {
+	void SetUp() override {
 		int slave_no = 0;
 		std::cout << __FUNCTION__ << std::endl;
 		master = new Node(new network::DummyNWInterface());
@@ -151,7 +151,7 @@ protected:
 
 	}
 
-	virtual void TearDown() override {
+	void TearDown() override {
 		std::cout << __FUNCTION__ << std::endl;
 		delete master;
 		for(int i = 0 ; i < SLAVE_TO_MASTER ; ++i){delete slave_to_master[i];}

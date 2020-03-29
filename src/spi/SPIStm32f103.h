@@ -21,3 +21,51 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
+#pragma once
+#include "SPIInterface.h"
+
+namespace spi {
+
+class SPIStm32f103 : public SPIInterface{
+public:
+	SPIStm32f103();
+	virtual ~SPIStm32f103();
+
+    void begin() override {};
+
+    /**
+    * Transfer a single byte
+    * @param tx Byte to send
+    * @return Data returned via spi
+    */
+    uint8_t transfer(uint8_t tx) override {
+    	(void)tx;
+    	return 0;
+    }
+
+    /**
+    * Transfer a buffer of data
+    * @param tbuf Transmit buffer
+    * @param rbuf Receive buffer
+    * @param len Length of the data
+    */
+    void transfernb(char* tbuf, char* rbuf, uint32_t len) override {
+    	(void)tbuf;
+    	(void)rbuf;
+    	(void)len;
+    }
+
+    /**
+    * Transfer a buffer of data without an rx buffer
+    * @param buf Pointer to a buffer of data
+    * @param len Length of the data
+    */
+    void transfern(char* buf, uint32_t len) override {
+    	(void)buf;
+    	(void)len;
+    }
+};
+
+} /* namespace spi */
+

@@ -28,7 +28,6 @@ SOFTWARE.
 
 #pragma once
 
-
 #include "Mesh.h"
 #include "Islands.h"
 #include "DataTypes.h"

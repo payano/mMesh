@@ -22,17 +22,44 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "gtest/gtest.h"
-#include "NodeTest.h"
-#include "LazyAlgorithmTest.h"
-#include "NRF24Test.h"
+#pragma once
+#include <stdint.h>
+namespace spi {
 
-// Look in nodetest.h
+class SPIInterface {
+public:
+	SPIInterface();
+	virtual ~SPIInterface();
 
-int main(int argc, char **argv) {
-	srand (time(0));
+    /**
+    * Start SPI
+    */
+//    virtual void begin(int busNo) = 0;
+    virtual void begin() = 0;
 
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
-}
+    /**
+    * Transfer a single byte
+    * @param tx Byte to send
+    * @return Data returned via spi
+    */
+    virtual uint8_t transfer(uint8_t tx) = 0;
+
+    /**
+    * Transfer a buffer of data
+    * @param tbuf Transmit buffer
+    * @param rbuf Receive buffer
+    * @param len Length of the data
+    */
+    virtual void transfernb(char* tbuf, char* rbuf, uint32_t len) = 0;
+
+    /**
+    * Transfer a buffer of data without an rx buffer
+    * @param buf Pointer to a buffer of data
+    * @param len Length of the data
+    */
+    virtual void transfern(char* buf, uint32_t len) = 0;
+
+};
+
+} /* namespace spi */
 

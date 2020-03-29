@@ -22,17 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#pragma once
+
 #include "gtest/gtest.h"
-#include "NodeTest.h"
-#include "LazyAlgorithmTest.h"
-#include "NRF24Test.h"
+#include "Nrf24.h"
 
-// Look in nodetest.h
+namespace network {
 
-int main(int argc, char **argv) {
-	srand (time(0));
+class NRF24Test  : public ::testing::Test {
+public:
+	NRF24Test() {}
+	virtual ~NRF24Test(){}
 
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+	void SetUp() override {
+
+	}
+	void TearDown() override {
+
+	}
+
+};
+
+TEST_F(NRF24Test,TestBasics){
+
 }
 
+
+} /* namespace network */

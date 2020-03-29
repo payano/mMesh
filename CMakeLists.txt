@@ -34,6 +34,7 @@ ${CMAKE_THREAD_LIBS_INIT}
 add_library(Network STATIC 
     src/network/DummyNWInterface.cpp
     src/network/Nrf24.cpp
+    src/network/RF24/RF24.cpp
 )
 
 add_library(Islands STATIC 
@@ -42,6 +43,10 @@ add_library(Islands STATIC
 
 add_library(NetAlgorithm STATIC 
     src/netAlgorithm/LazyAlgorithm.cpp
+)
+
+add_library(Spi STATIC
+	src/spi/SPIStm32f103.cpp
 )
 
 #target_include_directories(hello_library
@@ -53,10 +58,12 @@ add_library(NetAlgorithm STATIC
 include_directories(
 "src"
 "src/network"
+"src/network/RF24"
 "src/netAlgorithm"
 "src/mesh"
 "src/node"
 "src/islands"
+"src/spi"
 )
 
 ############################################################
@@ -87,3 +94,4 @@ ${CMAKE_THREAD_LIBS_INIT}
 #    PRIVATE 
 #        hello_library
 #)
+include_directories(cmake-build-debug/test/gtest/src/gtest/googletest/include)

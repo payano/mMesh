@@ -22,13 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 #include "Nrf24.h"
-//#include "RF24.h"
+#include "RF24.h"
 namespace network {
 
 Nrf24::Nrf24()
 {
-//	RF24 olle(1,1,1);
-//	olle.begin();
+	RF24 olle(1,1);
+	olle.begin();
 }
 
 Nrf24::~Nrf24()
