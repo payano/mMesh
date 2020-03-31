@@ -9,17 +9,11 @@
 
 #include "RF24.h"
 #include "nRF24L01.h"
-
 #include "SPIStm32f103.h"
-//#include "RF24_config.h"
 
-#include "Helper.h"
-#include <unistd.h>
+#include "DataTypes.h"
 
-/* More stuff */
-#define __usleep(usec) usleep(usec)
-#define __millis() usleep(1000)
-#define FAILURE_HANDLING
+#include <unistd.h> /* DELAY */
 
 #define rf24_max(a,b) (a>b?a:b)
 #define rf24_min(a,b) (a<b?a:b)
@@ -28,7 +22,6 @@
 #define print_address_register(...)
 #define PSTR(...) "FIXME"
 #define printf_P(...)
-#define memcpy(...)
 #define IF_SERIAL_DEBUG(...)
 
 #define pgm_read_byte(p) (*(p))
@@ -38,20 +31,50 @@
 #define HIGH GPIO::OUTPUT_HIGH
 #define INPUT GPIO::DIRECTION_IN
 #define OUTPUT GPIO::DIRECTION_OUT
-#define digitalWrite(pin, value) GPIO::write(pin, value)
-#define pinMode(pin, direction) GPIO::open(pin, direction)
-#define delay(milisec) __msleep(milisec)
-#define delayMicroseconds(usec) __usleep(usec)
-#define millis() __millis()
 
+#define _BV(x) (1<<(x))
 
+namespace GPIO {
+enum OUTPUTS {
+	OUTPUT_LOW,
+	OUTPUT_HIGH,
+};
 
-void delay(int delay){
-	(void)delay;
+enum DIRECTION {
+	DIRECTION_IN,
+	DIRECTION_OUT,
+};
+}
+/* TODO: MUST BE FIXED*/
+int writePin(uint16_t pin, uint16_t value){
+	(void)pin;
+	(void)value;
+	return 0;
 }
 
+/* TODO: MUST BE FIXED*/
+int open(uint16_t pin, bool value){
+	(void)pin;
+	(void)value;
+	return 0;
+}
 
-#define digitalWrite(pin, value) GPIO::write(pin, value)
+inline void memcpy(void *dest, const void *src, uint8_t size)
+{
+	copy_data(dest, src, size);
+}
+
+/* this must be ms... but can be changed on some places to us delay. */
+void delay(int delay){
+	usleep(delay*1000);
+}
+
+/* TODO: Set output pins */
+void digitalWrite(uint16_t pin, uint16_t value)
+{
+	writePin(pin, value);
+}
+//#define digitalWrite(pin, value) GPIO::write(pin, value)
 
 /* Make things work */
 namespace network {
@@ -95,12 +118,13 @@ bool RF24::begin(void)
 
 	uint8_t setup = 0;
 
-	// Initialize pins
-	if (ce_pin != csn_pin) {
-		pinMode(ce_pin, OUTPUT);
-	}
-
-	pinMode(csn_pin, OUTPUT);
+	/* TODO: this is arudino specific... */
+//	// Initialize pins
+//	if (ce_pin != csn_pin) {
+//		pinMode(ce_pin, OUTPUT);
+//	}
+//
+//	pinMode(csn_pin, OUTPUT);
 	spi->begin();
 	ce(LOW);
 	csn(HIGH);
@@ -207,10 +231,10 @@ void RF24::stopListening(void)
 {
 	ce(LOW);
 
-	delayMicroseconds(txDelay);
+	delay(txDelay);
 
 	if (read_register(FEATURE) & _BV(EN_ACK_PAY)) {
-		delayMicroseconds(txDelay); //200
+		delay(txDelay); //200
 		flush_tx();
 	}
 	//flush_rx();
@@ -361,23 +385,24 @@ bool RF24::write(const void* buf, uint8_t len, const bool multicast)
 	//Start Writing
 	startFastWrite(buf, len, multicast);
 
-	//Wait until complete or failed
-#if defined(FAILURE_HANDLING)
-	uint32_t timer = millis();
-#endif // defined(FAILURE_HANDLING)
-
-	while (!(get_status() & (_BV(TX_DS) | _BV(MAX_RT)))) {
-#if defined(FAILURE_HANDLING)
-		if (millis() - timer > 95) {
-			errNotify();
-#if defined(FAILURE_HANDLING)
-			return 0;
-#else
-			delay(100);
-#endif
-		}
-#endif
-	}
+	/* TODO: Do this check */
+//	//Wait until complete or failed
+//#if defined(FAILURE_HANDLING)
+//	uint32_t timer = millis();
+//#endif // defined(FAILURE_HANDLING)
+//
+//	while (!(get_status() & (_BV(TX_DS) | _BV(MAX_RT)))) {
+//#if defined(FAILURE_HANDLING)
+//		if (millis() - timer > 95) {
+//			errNotify();
+//#if defined(FAILURE_HANDLING)
+//			return 0;
+//#else
+//			delay(100);
+//#endif
+//		}
+//#endif
+//	}
 
 	ce(LOW);
 
@@ -404,27 +429,28 @@ bool RF24::writeFast(const void* buf, uint8_t len, const bool multicast)
 	//Return 0 so the user can control the retrys and set a timer or failure counter if required
 	//The radio will auto-clear everything in the FIFO as long as CE remains high
 
-#if defined(FAILURE_HANDLING)
-	uint32_t timer = millis();
-#endif
-
-	//Blocking only if FIFO is full. This will loop and block until TX is successful or fail
-	while ((get_status() & (_BV(TX_FULL)))) {
-		if (get_status() & _BV(MAX_RT)) {
-			//reUseTX();                                 //Set re-transmit
-			write_register(NRF_STATUS, _BV(MAX_RT));     //Clear max retry flag
-			return 0;                                    //Return 0. The previous payload has been retransmitted
-			// From the user perspective, if you get a 0, just keep trying to send the same payload
-		}
-#if defined(FAILURE_HANDLING)
-		if (millis() - timer > 95) {
-			errNotify();
-#if defined(FAILURE_HANDLING)
-			return 0;
-#endif // defined(FAILURE_HANDLING)
-		}
-#endif
-	}
+	/* TODO fix this*/
+//#if defined(FAILURE_HANDLING)
+//	uint32_t timer = millis();
+//#endif
+//
+//	//Blocking only if FIFO is full. This will loop and block until TX is successful or fail
+//	while ((get_status() & (_BV(TX_FULL)))) {
+//		if (get_status() & _BV(MAX_RT)) {
+//			//reUseTX();                                 //Set re-transmit
+//			write_register(NRF_STATUS, _BV(MAX_RT));     //Clear max retry flag
+//			return 0;                                    //Return 0. The previous payload has been retransmitted
+//			// From the user perspective, if you get a 0, just keep trying to send the same payload
+//		}
+//#if defined(FAILURE_HANDLING)
+//		if (millis() - timer > 95) {
+//			errNotify();
+//#if defined(FAILURE_HANDLING)
+//			return 0;
+//#endif // defined(FAILURE_HANDLING)
+//		}
+//#endif
+//	}
 	//Start Writing
 	startFastWrite(buf, len, multicast);
 
@@ -439,28 +465,41 @@ bool RF24::writeBlocking(const void* buf, uint8_t len, uint32_t timeout)
 	//This way the FIFO will fill up and allow blocking until packets go through
 	//The radio will auto-clear everything in the FIFO as long as CE remains high
 
-	//Get the time that the payload transmission started
-	uint32_t timer = millis();
+//	//Get the time that the payload transmission started
+//	uint32_t timer = millis();
+//
+//	while ((get_status()
+//			& (_BV(TX_FULL)))) { //Blocking only if FIFO is full. This will loop and block until TX is successful or timeout
+//
+//		if (get_status() & _BV(MAX_RT)) {  //If MAX Retries have been reached
+//			reUseTX(); //Set re-transmit and clear the MAX_RT interrupt flag
+//			if (millis() - timer > timeout) {
+//				return 0;
+//			}  //If this payload has exceeded the user-defined timeout, exit and return 0
+//		}
+//#if defined(FAILURE_HANDLING) || defined(RF24_LINUX)
+//		if (millis() - timer > (timeout + 95)) {
+//			errNotify();
+//#if defined(FAILURE_HANDLING)
+//			return 0;
+//#endif
+//		}
+//#endif
+//
+//	}
 
-	while ((get_status()
-			& (_BV(TX_FULL)))) { //Blocking only if FIFO is full. This will loop and block until TX is successful or timeout
+	uint32_t counter = 0;
+	while ((get_status() & (_BV(TX_FULL))))
+	{ //Blocking only if FIFO is full. This will loop and block until TX is successful or timeout
 
 		if (get_status() & _BV(MAX_RT)) {  //If MAX Retries have been reached
 			reUseTX(); //Set re-transmit and clear the MAX_RT interrupt flag
-			if (millis() - timer > timeout) {
-				return 0;
-			}  //If this payload has exceeded the user-defined timeout, exit and return 0
+			if(counter >= timeout) return 0;
+			++counter;
+			delay(1);
 		}
-#if defined(FAILURE_HANDLING) || defined(RF24_LINUX)
-		if (millis() - timer > (timeout + 95)) {
-			errNotify();
-#if defined(FAILURE_HANDLING)
-			return 0;
-#endif
-		}
-#endif
-
 	}
+
 
 	//Start Writing
 	startFastWrite(buf, len, 0); //Write the payload if a buffer is clear
@@ -472,9 +511,10 @@ bool RF24::writeBlocking(const void* buf, uint8_t len, uint32_t timeout)
 bool RF24::txStandBy()
 {
 
-#if defined(FAILURE_HANDLING)
-	uint32_t timeout = millis();
-#endif
+	/* TODO: fix this*/
+//#if defined(FAILURE_HANDLING)
+//	uint32_t timeout = millis();
+//#endif
 	while (!(read_register(FIFO_STATUS) & _BV(TX_EMPTY))) {
 		if (get_status() & _BV(MAX_RT)) {
 			write_register(NRF_STATUS, _BV(MAX_RT));
@@ -482,14 +522,14 @@ bool RF24::txStandBy()
 			flush_tx();    //Non blocking, flush the data
 			return 0;
 		}
-#if defined(FAILURE_HANDLING)
-		if (millis() - timeout > 95) {
-			errNotify();
-#if defined(FAILURE_HANDLING)
-			return 0;
-#endif
-		}
-#endif
+//#if defined(FAILURE_HANDLING)
+//		if (millis() - timeout > 95) {
+//			errNotify();
+//#if defined(FAILURE_HANDLING)
+//			return 0;
+//#endif
+//		}
+//#endif
 	}
 
 	ce(LOW);               //Set STANDBY-I mode
@@ -503,27 +543,28 @@ bool RF24::txStandBy(uint32_t timeout, bool startTx)
 		stopListening();
 		ce(HIGH);
 	}
-	uint32_t start = millis();
+	uint32_t counter = 0;
 
 	while (!(read_register(FIFO_STATUS) & _BV(TX_EMPTY))) {
 		if (get_status() & _BV(MAX_RT)) {
 			write_register(NRF_STATUS, _BV(MAX_RT));
 			ce(LOW); // Set re-transmit
 			ce(HIGH);
-			if (millis() - start >= timeout) {
+			if (counter >= timeout) {
 				ce(LOW);
 				flush_tx();
 				return 0;
 			}
+			delay(1);
 		}
-#if defined(FAILURE_HANDLING)
-		if (millis() - start > (timeout + 95)) {
-			errNotify();
-#if defined(FAILURE_HANDLING)
-			return 0;
-#endif
-		}
-#endif
+//#if defined(FAILURE_HANDLING)
+//		if (millis() - start > (timeout + 95)) {
+//			errNotify();
+//#if defined(FAILURE_HANDLING)
+//			return 0;
+//#endif
+//		}
+//#endif
 	}
 
 	ce(LOW);  //Set STANDBY-I mode
@@ -590,9 +631,10 @@ void RF24::startWrite(const void* buf, uint8_t len, const bool multicast)
 	//write_payload( buf, len );
 	write_payload(buf, len, multicast ? W_TX_PAYLOAD_NO_ACK : W_TX_PAYLOAD);
 	ce(HIGH);
-#if !defined(F_CPU) || F_CPU > 20000000
-	delayMicroseconds(10);
-#endif
+	delay(10);
+//#if !defined(F_CPU) || F_CPU > 20000000
+//	delayMicroseconds(10);
+//#endif
 	ce(LOW);
 }
 
@@ -1012,10 +1054,12 @@ void RF24::csn(bool mode)
 		_SPI.chipSelect(csn_pin);
 #endif // defined(RF24_RPi)
 
-#if !defined(RF24_LINUX)
 	digitalWrite(csn_pin, mode);
-	delayMicroseconds(csDelay);
-#endif // !defined(RF24_LINUX)
+	delay(csDelay);
+//#if !defined(RF24_LINUX)
+//	digitalWrite(csn_pin, mode);
+//	delayMicroseconds(csDelay);
+//#endif // !defined(RF24_LINUX)
 }
 
 void RF24::ce(bool level)
