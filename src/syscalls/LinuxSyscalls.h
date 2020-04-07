@@ -23,46 +23,32 @@ SOFTWARE.
 */
 
 #pragma once
-#include <stdint.h>
-namespace spi {
 
-class SPIInterface {
+#include "SyscallsInterface.h"
+#include <thread>
+
+//#if defined(_GLIBCXX_HAS_GTHREADS) && defined(_GLIBCXX_USE_C99_STDINT_TR1)
+
+
+namespace syscalls {
+
+class LinuxSyscalls : public SyscallsInterface {
+private:
+	bool timerStarted;
+	bool timerDone;
+	std::thread *mThread;
 public:
+	LinuxSyscalls();
+	virtual ~LinuxSyscalls();
 
-	virtual void setSPI(void *spidrv);
-
-//	SPIInterface();
-	virtual ~SPIInterface(){}
-
-    /**
-    * Start SPI
-    */
-//    virtual void begin(int busNo) = 0;
-    virtual void begin() = 0;
-
-    /**
-    * Transfer a single byte
-    * @param tx Byte to send
-    * @return Data returned via spi
-    */
-    virtual uint8_t transfer(uint8_t tx) = 0;
-
-    /**
-    * Transfer a buffer of data
-    * @param tbuf Transmit buffer
-    * @param rbuf Receive buffer
-    * @param len Length of the data
-    */
-    virtual void transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) = 0;
-
-    /**
-    * Transfer a buffer of data without an rx buffer
-    * @param buf Pointer to a buffer of data
-    * @param len Length of the data
-    */
-    virtual void transfern(uint8_t *buf, uint16_t len) = 0;
-
+	void set_cpu_speed(SPEED speed) override;
+	void usleep(int delay) override;
+	void msleep(int delay) override;
+	int start_timer(int delay) override;
+	bool timer_started() override;
+private:
+	void armTimer(int ms);
+	void timerCallback(int ms);
 };
-
-} /* namespace spi */
-
+} /* namespace syscalls */
+//#endif

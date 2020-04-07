@@ -21,13 +21,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#ifndef UNIX
+
 #include "Nrf24.h"
 #include "RF24.h"
 namespace network {
 
-Nrf24::Nrf24()
+Nrf24::Nrf24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall)
 {
-	RF24 olle(1,1);
+	RF24 olle(gpio, syscall);
 	olle.begin();
 }
 
@@ -38,6 +40,11 @@ Nrf24::~Nrf24()
 int Nrf24::init()
 {
 	return 0;
+}
+
+void Nrf24::setSPI(void *spi)
+{
+
 }
 
 void Nrf24::deinit()
@@ -61,5 +68,6 @@ void Nrf24::recv_from(union mesh_internal_msg *msg)
 	(void)msg;
 }
 
-
 }
+
+#endif

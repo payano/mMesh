@@ -26,45 +26,34 @@ SOFTWARE.
 #include "SPIInterface.h"
 
 namespace spi {
-
-class SPIStm32f103 : public SPIInterface{
+class SPIStm32f103 : public SPIInterface {
+private:
+	void *hspi;
 public:
 	SPIStm32f103();
 	virtual ~SPIStm32f103();
-
-    void begin() override {};
-
+	void setSPI(void *spidrv) override;
+    void begin() override;
     /**
     * Transfer a single byte
     * @param tx Byte to send
     * @return Data returned via spi
     */
-    uint8_t transfer(uint8_t tx) override {
-    	(void)tx;
-    	return 0;
-    }
-
-    /**
+    uint8_t transfer(uint8_t tx) override;
+        /**
     * Transfer a buffer of data
     * @param tbuf Transmit buffer
     * @param rbuf Receive buffer
     * @param len Length of the data
     */
-    void transfernb(char* tbuf, char* rbuf, uint32_t len) override {
-    	(void)tbuf;
-    	(void)rbuf;
-    	(void)len;
-    }
+    void transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) override;
 
     /**
     * Transfer a buffer of data without an rx buffer
     * @param buf Pointer to a buffer of data
     * @param len Length of the data
     */
-    void transfern(char* buf, uint32_t len) override {
-    	(void)buf;
-    	(void)len;
-    }
+    void transfern(uint8_t *buf, uint16_t len) override ;
 };
 
 } /* namespace spi */

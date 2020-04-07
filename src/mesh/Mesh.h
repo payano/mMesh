@@ -29,7 +29,11 @@ SOFTWARE.
 #include "MeshMessagePublisher.h"
 #include <stdint.h>
 #include "Constants.h"
-#include <thread>         // std::thread
+//#include <thread>         // std::thread
+
+namespace syscalls {
+class SyscallsInterface;
+}
 
 namespace mesh {
 class NetworkData;
@@ -59,6 +63,7 @@ private:
 	NetworkInterface *nw;
 	NetAlgorithm::NetAlgorithmInterface *algorithm;
 	MeshNetworkHandler *networkHandler;
+	syscalls::SyscallsInterface *syscall;
 	char name[MAX_NAME];
 	uint8_t childs[CHILD_COUNT];
 	bool mSetMaster;
@@ -70,12 +75,12 @@ private:
 	/* in linux this will not be a callback function
 	 * this is something to simulate the microcontroller
 	*/
-	bool timerStarted;
-	bool timerDone;
-	std::thread *mThread;
+//	bool timerStarted;
+//	bool timerDone;
+//	std::thread *mThread;
 
 public:
-	Mesh(NetworkInterface *nw);
+	Mesh(NetworkInterface *nw, syscalls::SyscallsInterface *syscalls);
 	virtual ~Mesh();
 	void setMaster();
 	int run();

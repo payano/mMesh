@@ -27,13 +27,23 @@ SOFTWARE.
 #include <stdint.h>
 #include "NetworkInterface.h"
 
+namespace syscalls {
+class SyscallsInterface;
+}
+namespace gpio {
+class GPIOInterface;
+}
+
 namespace network {
 
 class Nrf24 : public NetworkInterface {
+private:
+
 protected:
 public:
-	Nrf24();
+	Nrf24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall);
 	virtual ~Nrf24();
+	void setSPI(void *spi) override;
 	int init() override;
 	void deinit() override;
 	int start() override;

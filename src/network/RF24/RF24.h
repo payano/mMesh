@@ -9,9 +9,18 @@
 #pragma once
 #include <stdint.h>
 
+namespace syscalls {
+class SyscallsInterface;
+}
+
 namespace spi {
 class SPIInterface;
 }
+
+namespace gpio {
+class GPIOInterface;
+}
+
 namespace network {
 /**
  * Power Amplifier level.
@@ -60,15 +69,17 @@ static const constexpr uint8_t olle = 3;
 //static constexpr uint8_t child_pipe[];
 
 private:
-	uint16_t ce_pin; /**< "Chip Enable" pin, activates the RX or TX role */
-	uint16_t csn_pin; /**< SPI Chip select */
-	uint16_t spi_speed; /**< SPI Bus Speed */
+//	uint16_t ce_pin; /**< "Chip Enable" pin, activates the RX or TX role */
+//	uint16_t csn_pin; /**< SPI Chip select */
+//	uint16_t spi_speed; /**< SPI Bus Speed */
 	bool p_variant; /* False for RF24L01 and true for RF24L01P */
 	uint8_t payload_size; /**< Fixed size of payloads */
 	bool dynamic_payloads_enabled; /**< Whether dynamic payloads are enabled. */
 	uint8_t pipe0_reading_address[5]; /**< Last address set on pipe 0 for reading. */
 	uint8_t addr_width; /**< The address width to use - 3,4 or 5 bytes. */
 	spi::SPIInterface *spi; /**< The address width to use - 3,4 or 5 bytes. */
+	gpio::GPIOInterface *gpio; /**< The address width to use - 3,4 or 5 bytes. */
+	syscalls::SyscallsInterface *syscall;
 
 protected:
 	/**
@@ -100,7 +111,8 @@ public:
 	 * @param _cepin The pin attached to Chip Enable on the RF module
 	 * @param _cspin The pin attached to Chip Select
 	 */
-	RF24(uint16_t _cepin, uint16_t _cspin);
+//	RF24(uint16_t _cepin, uint16_t _cspin);
+	RF24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall);
 	virtual ~RF24();
 
 	/**
@@ -639,10 +651,7 @@ public:
 	 *
 	 * @return true if this is a legitimate radio
 	 */
-	bool isValid()
-	{
-		return ce_pin != 0xff && csn_pin != 0xff;
-	}
+	bool isValid();
 
 	/**
 	 * Close a pipe after it has been previously opened.

@@ -6,14 +6,19 @@
  version 2 as published by the Free Software Foundation.
  */
 
+#ifndef UNIX
 
 #include "RF24.h"
 #include "nRF24L01.h"
 #include "SPIStm32f103.h"
-
+#include "GPIOStm32f103.h"
 #include "DataTypes.h"
 
+#include "SyscallsInterface.h"
+
 #include <unistd.h> /* DELAY */
+
+#include "main.h"
 
 #define rf24_max(a,b) (a>b?a:b)
 #define rf24_min(a,b) (a<b?a:b)
@@ -45,35 +50,19 @@ enum DIRECTION {
 	DIRECTION_OUT,
 };
 }
-/* TODO: MUST BE FIXED*/
-int writePin(uint16_t pin, uint16_t value){
-	(void)pin;
-	(void)value;
-	return 0;
-}
-
-/* TODO: MUST BE FIXED*/
-int open(uint16_t pin, bool value){
-	(void)pin;
-	(void)value;
-	return 0;
-}
 
 inline void memcpy(void *dest, const void *src, uint8_t size)
 {
 	copy_data(dest, src, size);
 }
 
-/* this must be ms... but can be changed on some places to us delay. */
-void delay(int delay){
-	usleep(delay*1000);
-}
+///* this must be ms... but can be changed on some places to us delay. */
+//void delay(int delay){
+//	/* Need a generic class for common sys calls.. */
+//	HAL_Delay(delay*1000);
+////	usleep(delay*1000);
+//}
 
-/* TODO: Set output pins */
-void digitalWrite(uint16_t pin, uint16_t value)
-{
-	writePin(pin, value);
-}
 //#define digitalWrite(pin, value) GPIO::write(pin, value)
 
 /* Make things work */
@@ -95,11 +84,12 @@ inline void RF24::endTransaction()
 	csn(HIGH);
 }
 
-RF24::RF24(uint16_t _cepin, uint16_t _cspin)
+//RF24::RF24(uint16_t _cepin, uint16_t _cspin)
+RF24::RF24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall)
 {
-	ce_pin = _cepin;
-	csn_pin = _cspin;
-	spi_speed = 0;
+//	ce_pin = _cepin;
+//	csn_pin = _cspin;
+//	spi_speed = 0;
 	p_variant = false;
 	payload_size = 32;
 	dynamic_payloads_enabled = false;
@@ -109,6 +99,8 @@ RF24::RF24(uint16_t _cepin, uint16_t _cspin)
 	failureDetected = 0;
 	pipe0_reading_address[0] = 0;
 	spi = new spi::SPIStm32f103();
+	this->gpio = gpio;
+	this->syscall = syscall;
 }
 
 RF24::~RF24() {}
@@ -128,7 +120,7 @@ bool RF24::begin(void)
 	spi->begin();
 	ce(LOW);
 	csn(HIGH);
-	delay(100);
+	syscall->msleep(100);
 
 	// Must allow the radio time to settle else configuration bits will not necessarily stick.
 	// This is actually only required following power up but some settling time also appears to
@@ -136,7 +128,7 @@ bool RF24::begin(void)
 	// Enabling 16b CRC is by far the most obvious case if the wrong timing is used - or skipped.
 	// Technically we require 4.5ms + 14us as a worst case. We'll just call it 5ms for good measure.
 	// WARNING: Delay is based on P-variant whereby non-P *may* require different timing.
-	delay(5);
+	syscall->msleep(5);
 
 	// Reset NRF_CONFIG and enable 16-bit CRC.
 	write_register(NRF_CONFIG, 0x0C);
@@ -231,10 +223,10 @@ void RF24::stopListening(void)
 {
 	ce(LOW);
 
-	delay(txDelay);
+	syscall->usleep(txDelay);
 
 	if (read_register(FEATURE) & _BV(EN_ACK_PAY)) {
-		delay(txDelay); //200
+		syscall->usleep(txDelay); //200
 		flush_tx();
 	}
 	//flush_rx();
@@ -375,7 +367,7 @@ void RF24::powerUp(void)
 		// For nRF24L01+ to go from power down mode to TX or RX mode it must first pass through stand-by mode.
 		// There must be a delay of Tpd2stby (see Table 16.) after the nRF24L01+ leaves power down mode before
 		// the CEis set high. - Tpd2stby can be up to 5ms per the 1.0 datasheet
-		delay(5);
+		syscall->msleep(5);
 	}
 }
 
@@ -496,7 +488,7 @@ bool RF24::writeBlocking(const void* buf, uint8_t len, uint32_t timeout)
 			reUseTX(); //Set re-transmit and clear the MAX_RT interrupt flag
 			if(counter >= timeout) return 0;
 			++counter;
-			delay(1);
+			syscall->msleep(1);
 		}
 	}
 
@@ -555,7 +547,7 @@ bool RF24::txStandBy(uint32_t timeout, bool startTx)
 				flush_tx();
 				return 0;
 			}
-			delay(1);
+			syscall->msleep(1);
 		}
 //#if defined(FAILURE_HANDLING)
 //		if (millis() - start > (timeout + 95)) {
@@ -631,10 +623,11 @@ void RF24::startWrite(const void* buf, uint8_t len, const bool multicast)
 	//write_payload( buf, len );
 	write_payload(buf, len, multicast ? W_TX_PAYLOAD_NO_ACK : W_TX_PAYLOAD);
 	ce(HIGH);
-	delay(10);
+	syscall->msleep(10);
 //#if !defined(F_CPU) || F_CPU > 20000000
 //	delayMicroseconds(10);
 //#endif
+	syscall->usleep(10);
 	ce(LOW);
 }
 
@@ -660,6 +653,12 @@ bool RF24::testRPD(void)
 {
 	return (read_register(RPD) & 1);
 }
+
+bool RF24::isValid()
+{
+	return gpio->isset(gpio::PINS::CE_PIN) && gpio->isset(gpio::PINS::CSN_PIN);
+}
+
 
 void RF24::closeReadingPipe(uint8_t pipe)
 {
@@ -717,7 +716,7 @@ uint8_t RF24::getDynamicPayloadSize(void)
 
 	if (result > 32) {
 		flush_rx();
-		delay(2);
+		syscall->msleep(2);
 		return 0;
 	}
 	return result;
@@ -1054,8 +1053,8 @@ void RF24::csn(bool mode)
 		_SPI.chipSelect(csn_pin);
 #endif // defined(RF24_RPi)
 
-	digitalWrite(csn_pin, mode);
-	delay(csDelay);
+	gpio->set_pin(gpio::PINS::CSN_PIN, mode);
+	syscall->usleep(csDelay);
 //#if !defined(RF24_LINUX)
 //	digitalWrite(csn_pin, mode);
 //	delayMicroseconds(csDelay);
@@ -1065,8 +1064,9 @@ void RF24::csn(bool mode)
 void RF24::ce(bool level)
 {
 	//Allow for 3-pin use on ATTiny
-	if (ce_pin != csn_pin) {
-		digitalWrite(ce_pin, level);
+
+	if (gpio->isset(gpio::PINS::CE_PIN) != gpio->isset(gpio::PINS::CSN_PIN)) {
+		gpio->set_pin(gpio::PINS::CE_PIN, level);
 	}
 }
 
@@ -1092,6 +1092,21 @@ uint8_t RF24::read_register(uint8_t reg)
 	endTransaction();
 	return result;
 }
+
+uint8_t RF24::write_register(uint8_t reg, uint8_t value)
+{
+    uint8_t status;
+
+//    IF_SERIAL_DEBUG(printf_P(PSTR("write_register(%02x,%02x)\r\n"), reg, value));
+
+    beginTransaction();
+    status = spi->transfer(W_REGISTER | (REGISTER_MASK & reg));
+    spi->transfer(value);
+    endTransaction();
+
+    return status;
+}
+
 
 uint8_t RF24::write_register(uint8_t reg, const uint8_t* buf, uint8_t len)
 {
@@ -1216,3 +1231,5 @@ uint8_t RF24::spiTrans(uint8_t cmd)
 
 
 } /* namespace network */
+
+#endif

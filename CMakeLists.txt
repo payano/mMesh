@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
+if(UNIX)
+	add_definitions(-DUNIX) 
+endif (UNIX)
 project(hello_library)
 find_package (Threads REQUIRED)
 
@@ -21,7 +24,6 @@ add_library(Mesh STATIC
 target_link_libraries (Mesh
 ${CMAKE_THREAD_LIBS_INIT}
 )
-
 
 add_library(Node STATIC 
     src/node/Node.cpp
@@ -49,6 +51,15 @@ add_library(Spi STATIC
 	src/spi/SPIStm32f103.cpp
 )
 
+add_library(Syscalls STATIC
+	src/syscalls/LinuxSyscalls.cpp
+	src/syscalls/STM32Syscalls.cpp
+)
+
+add_library(GPIO STATIC
+	src/GPIO/GPIOStm32f103.cpp
+)
+
 #target_include_directories(hello_library
 #    PUBLIC 
 #        ${PROJECT_SOURCE_DIR}/include
@@ -64,6 +75,8 @@ include_directories(
 "src/node"
 "src/islands"
 "src/spi"
+"src/GPIO"
+"src/syscalls"
 )
 
 ############################################################

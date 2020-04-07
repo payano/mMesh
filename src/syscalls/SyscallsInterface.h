@@ -23,46 +23,23 @@ SOFTWARE.
 */
 
 #pragma once
-#include <stdint.h>
-namespace spi {
 
-class SPIInterface {
+namespace syscalls {
+
+enum SPEED {
+	SPEED_UNSET,
+	SPEED_72MHZ,
+};
+
+class SyscallsInterface {
 public:
-
-	virtual void setSPI(void *spidrv);
-
-//	SPIInterface();
-	virtual ~SPIInterface(){}
-
-    /**
-    * Start SPI
-    */
-//    virtual void begin(int busNo) = 0;
-    virtual void begin() = 0;
-
-    /**
-    * Transfer a single byte
-    * @param tx Byte to send
-    * @return Data returned via spi
-    */
-    virtual uint8_t transfer(uint8_t tx) = 0;
-
-    /**
-    * Transfer a buffer of data
-    * @param tbuf Transmit buffer
-    * @param rbuf Receive buffer
-    * @param len Length of the data
-    */
-    virtual void transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) = 0;
-
-    /**
-    * Transfer a buffer of data without an rx buffer
-    * @param buf Pointer to a buffer of data
-    * @param len Length of the data
-    */
-    virtual void transfern(uint8_t *buf, uint16_t len) = 0;
+	virtual ~SyscallsInterface(){}
+	virtual void set_cpu_speed(SPEED speed) = 0;
+	virtual void usleep(int delay) = 0;
+	virtual void msleep(int delay) = 0;
+	virtual int start_timer(int delay) = 0;
+	virtual bool timer_started() = 0;
 
 };
 
-} /* namespace spi */
-
+}

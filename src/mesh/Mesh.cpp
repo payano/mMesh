@@ -29,6 +29,7 @@ SOFTWARE.
 #include "LazyAlgorithm.h"
 #include "NetworkData.h"
 #include "MeshNetworkHandler.h"
+#include "SyscallsInterface.h"
 /* should be removed later */
 //#include <stdio.h>
 #include <unistd.h>
@@ -75,7 +76,7 @@ struct stateData {
 	enum STARTED_STATE started_state;
 };
 
-Mesh::Mesh(NetworkInterface *nw) : nw(nw) {
+Mesh::Mesh(NetworkInterface *nw, syscalls::SyscallsInterface *syscall) : nw(nw), syscall(syscall) {
 	network = new NetworkData;
 	statedata = new stateData;
 	algorithm = new NetAlgorithm::LazyAlgorithm();
@@ -83,13 +84,13 @@ Mesh::Mesh(NetworkInterface *nw) : nw(nw) {
 	networkHandler = new MeshNetworkHandler(this, network, nw, algorithm);
 
 	initStateMachine();
-	timerStarted = false;
-	timerDone = false;
+//	timerStarted = false;
+//	timerDone = false;
 	mSetMaster = false;
 
 	clear_timer_counters();
 
-	mThread = nullptr;
+//	mThread = nullptr;
 	for(int i = 0 ; i < MAX_NAME; ++i) {name[i] = 0;}
 	for(int i = 0 ; i < CHILD_COUNT; ++i){childs[i] = 0x0;}
 }
@@ -97,11 +98,11 @@ Mesh::~Mesh() {
 	delete network;
 	delete algorithm;
 	if(nullptr != statedata) delete statedata;
-	if(nullptr != mThread) {
-		mThread->join();
-		delete mThread;
-		mThread = nullptr;
-	}
+//	if(nullptr != mThread) {
+//		mThread->join();
+//		delete mThread;
+//		mThread = nullptr;
+//	}
 }
 
 void Mesh::setMaster() {
@@ -148,24 +149,27 @@ char *Mesh::getName() { return name;}
 
 void Mesh::timerCallback(int ms)
 {
-	timerDone = false;
-	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-	timerDone = true;
-	timerStarted = false;
+	(void)ms;
+//	timerDone = false;
+//	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+//	timerDone = true;
+//	timerStarted = false;
 }
 
 void Mesh::armTimer(int ms)
 {
 	/* Only one at the time */
-	if(timerStarted) return;
-	if(nullptr != mThread) {
-		mThread->join();
-		delete mThread;
-		mThread = nullptr;
-	}
-	/* this should access a hw timer */
-	timerStarted = true;
-	mThread = new std::thread(&Mesh::timerCallback, this, ms);
+	if(syscall->timer_started()) return;
+
+	syscall->start_timer(ms);
+//	if(nullptr != mThread) {
+//		mThread->join();
+//		delete mThread;
+//		mThread = nullptr;
+//	}
+//	/* this should access a hw timer */
+//	timerStarted = true;
+//	mThread = new std::thread(&Mesh::timerCallback, this, ms);
 }
 
 void Mesh::initStateMachine(){statedata->topState = STATE::STATE_INIT;}
@@ -195,7 +199,7 @@ void Mesh::stateMachine()
 void Mesh::sm_master()
 {
 	act_on_messages();
-	if(timerStarted) return;
+	if(syscall->timer_started()) return;
 
 	armTimer(DECREASE_TIMERS);
 
@@ -232,7 +236,8 @@ void Mesh::sm_starting_seeking_parent()
 void Mesh::sm_starting_choosing_parent() {
 	/* Here we also get incoming broadcast messages */
 	// Check incoming msg, sorting might be good.
-	if(!timerDone) return;
+
+	if(syscall->timer_started()) return;
 
 	if(0 == network->queue_sz()) {
 		statedata->starting_state = STARTING_STATE::STARTING_SEEKING_PARENT;
@@ -257,7 +262,7 @@ void Mesh::sm_starting_register_to_parent()
 
 void Mesh::sm_starting_waiting_for_parent()
 {
-	if(!timerDone) return;
+	if(syscall->timer_started()) return;
 
 	if(0 == network->queue_sz())
 	{
@@ -290,7 +295,7 @@ void Mesh::sm_starting_register_to_master()
 
 void Mesh::sm_starting_waiting_for_master()
 {
-	if(!timerDone) return;
+	if(syscall->timer_started()) return;
 
 	if(0 == network->queue_sz())
 	{
@@ -543,7 +548,7 @@ void Mesh::sm_started() {
 		break;
 	}
 
-	if(timerStarted) return;
+	if(syscall->timer_started()) return;
 	armTimer(DECREASE_TIMERS);
 	decrease_timer_counters();
 	decrease_childs_timer();

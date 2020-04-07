@@ -23,46 +23,28 @@ SOFTWARE.
 */
 
 #pragma once
-#include <stdint.h>
-namespace spi {
+#include "GPIOInterface.h"
 
-class SPIInterface {
+//class GPIO_TypeDef;
+
+namespace gpio {
+
+class GPIOStm32f103 : public GPIOInterface {
+private:
+	struct gpio_pins *pins;
 public:
+	GPIOStm32f103();
+	virtual ~GPIOStm32f103();
 
-	virtual void setSPI(void *spidrv);
+	int init() override;
+	void deinit() override;
+	bool isset(PINS pin) override;
+	void init_pins(struct gpio_pins *pins) override;
+	void set_pin(PINS pin, bool level) override;
 
-//	SPIInterface();
-	virtual ~SPIInterface(){}
-
-    /**
-    * Start SPI
-    */
-//    virtual void begin(int busNo) = 0;
-    virtual void begin() = 0;
-
-    /**
-    * Transfer a single byte
-    * @param tx Byte to send
-    * @return Data returned via spi
-    */
-    virtual uint8_t transfer(uint8_t tx) = 0;
-
-    /**
-    * Transfer a buffer of data
-    * @param tbuf Transmit buffer
-    * @param rbuf Receive buffer
-    * @param len Length of the data
-    */
-    virtual void transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) = 0;
-
-    /**
-    * Transfer a buffer of data without an rx buffer
-    * @param buf Pointer to a buffer of data
-    * @param len Length of the data
-    */
-    virtual void transfern(uint8_t *buf, uint16_t len) = 0;
-
+private:
+	void read_pin(PINS *pin, void *gpio_port, uint16_t *gpio_pin);
 };
 
-} /* namespace spi */
+} /* namespace gpio */
 

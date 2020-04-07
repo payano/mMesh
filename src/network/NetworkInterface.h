@@ -38,6 +38,7 @@ class NetworkInterface : public NetworkInterfacePublisher{
 	struct net_address mac;
 public:
 	virtual int init() = 0;
+	virtual void setSPI(void *spi) = 0;
 	virtual void deinit() = 0;
 	virtual int start() = 0;
 	virtual int sendto(const struct net_address *dest, union mesh_internal_msg *msg) = 0;

@@ -23,46 +23,33 @@ SOFTWARE.
 */
 
 #pragma once
+#ifndef UNIX
+
+#include "SyscallsInterface.h"
+#include "main.h"
 #include <stdint.h>
-namespace spi {
 
-class SPIInterface {
+namespace syscalls {
+
+class STM32Syscalls : public SyscallsInterface {
+private:
+	uint32_t cpu_speed;
+	uint16_t per;
+	uint16_t psc;
+	TIM_HandleTypeDef htim1;
+
 public:
+	STM32Syscalls();
+	virtual ~STM32Syscalls();
+	void set_htim_parameters();
 
-	virtual void setSPI(void *spidrv);
-
-//	SPIInterface();
-	virtual ~SPIInterface(){}
-
-    /**
-    * Start SPI
-    */
-//    virtual void begin(int busNo) = 0;
-    virtual void begin() = 0;
-
-    /**
-    * Transfer a single byte
-    * @param tx Byte to send
-    * @return Data returned via spi
-    */
-    virtual uint8_t transfer(uint8_t tx) = 0;
-
-    /**
-    * Transfer a buffer of data
-    * @param tbuf Transmit buffer
-    * @param rbuf Receive buffer
-    * @param len Length of the data
-    */
-    virtual void transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) = 0;
-
-    /**
-    * Transfer a buffer of data without an rx buffer
-    * @param buf Pointer to a buffer of data
-    * @param len Length of the data
-    */
-    virtual void transfern(uint8_t *buf, uint16_t len) = 0;
-
+	void set_cpu_speed(SPEED speed) override;
+	void usleep(int delay) override;
+	void msleep(int delay) override;
+	int start_timer(int delay) override;
+	bool timer_started() override;
 };
 
-} /* namespace spi */
+} /* namespace syscalls */
 
+#endif

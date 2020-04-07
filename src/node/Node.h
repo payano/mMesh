@@ -36,7 +36,11 @@ SOFTWARE.
 #include <thread>         // std::thread
 
 namespace network {
-	class NetworkInterface;
+class NetworkInterface;
+}
+
+namespace syscalls {
+class SyscallsInterface;
 }
 
 namespace node {
@@ -46,6 +50,7 @@ private:
 	friend class island::Island;
 	mesh::Mesh *mesh;
 	network::NetworkInterface *nw;
+	syscalls::SyscallsInterface *syscalls;
 	static int nodeId;
 	std::thread *mThread;
 	bool mThreadRunning;

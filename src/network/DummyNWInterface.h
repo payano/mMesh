@@ -40,6 +40,10 @@ private:
 public:
 	DummyNWInterface() : muted(false){}
 	virtual ~DummyNWInterface(){}
+	void setSPI(void *spi) override {
+		(void)spi;
+	}
+
 	void addIsland(island::Island *island){islands.push_back(island);}
 	void removeIsland(island::Island *island){islands.remove(island);}
 	int init() override {return 0;}

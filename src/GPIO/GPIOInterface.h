@@ -23,46 +23,31 @@ SOFTWARE.
 */
 
 #pragma once
+
 #include <stdint.h>
-namespace spi {
 
-class SPIInterface {
-public:
+namespace gpio {
 
-	virtual void setSPI(void *spidrv);
-
-//	SPIInterface();
-	virtual ~SPIInterface(){}
-
-    /**
-    * Start SPI
-    */
-//    virtual void begin(int busNo) = 0;
-    virtual void begin() = 0;
-
-    /**
-    * Transfer a single byte
-    * @param tx Byte to send
-    * @return Data returned via spi
-    */
-    virtual uint8_t transfer(uint8_t tx) = 0;
-
-    /**
-    * Transfer a buffer of data
-    * @param tbuf Transmit buffer
-    * @param rbuf Receive buffer
-    * @param len Length of the data
-    */
-    virtual void transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) = 0;
-
-    /**
-    * Transfer a buffer of data without an rx buffer
-    * @param buf Pointer to a buffer of data
-    * @param len Length of the data
-    */
-    virtual void transfern(uint8_t *buf, uint16_t len) = 0;
-
+struct gpio_pins{
+	void *ce_port;
+	uint16_t ce_pin;
+	void *csn_port;
+	uint16_t csn_pin;
 };
 
-} /* namespace spi */
+enum PINS {
+CE_PIN,
+CSN_PIN,
+};
 
+class GPIOInterface {
+public:
+	virtual int init() = 0;
+	virtual void deinit() = 0;
+	virtual bool isset(PINS pin) = 0;
+	virtual void init_pins(struct gpio_pins *pins) = 0;
+	virtual void set_pin(PINS pin, bool level) = 0;
+	virtual ~GPIOInterface(){}
+};
+
+}

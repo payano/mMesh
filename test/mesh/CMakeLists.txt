@@ -8,6 +8,9 @@ TARGET_LINK_LIBRARIES(meshTests
     Network
     Islands
     NetAlgorithm
+    GPIO
+    Spi
+    Syscalls
     libgtest
     libgmock
 )
@@ -20,6 +23,9 @@ include_directories(
 "../../src/mesh"
 "../../src/node"
 "../../src/islands"
+"../../src/GPIO"
+"../../src/syscalls"
+"../../src/spi"
 )
 
 add_test(NAME meshTests

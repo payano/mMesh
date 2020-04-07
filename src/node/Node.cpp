@@ -28,6 +28,8 @@ SOFTWARE.
 #include <stdio.h> // REMOVE
 #include <unistd.h>
 #include <chrono>
+
+#include "LinuxSyscalls.h"
 namespace node {
 
 int Node::nodeId = 0;
@@ -37,7 +39,8 @@ Node::Node(network::NetworkInterface *nw) {
 	mThread = nullptr;
 	mThreadRunning = false;
 	// Might want to use threads to really simulate a "stm32" or "Arduino" controller.
-	mesh = new mesh::Mesh(nw);
+	syscalls = new syscalls::LinuxSyscalls();
+	mesh = new mesh::Mesh(nw, syscalls);
 	paused = false;
 	char name[10] = {0,};
 	memset(name, '\0', 10);
@@ -91,6 +94,7 @@ Node::~Node() {
 	if(nullptr != mesh) delete mesh;
 	if(nullptr != nw) delete nw;
 	nodeId--;
+	if(nullptr != syscalls) delete syscalls;
 
 }
 
