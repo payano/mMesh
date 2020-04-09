@@ -85,7 +85,7 @@ inline void RF24::endTransaction()
 }
 
 //RF24::RF24(uint16_t _cepin, uint16_t _cspin)
-RF24::RF24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall)
+RF24::RF24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall, spi::SPIInterface *spi)
 {
 //	ce_pin = _cepin;
 //	csn_pin = _cspin;
@@ -98,7 +98,7 @@ RF24::RF24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall)
 	txDelay = 0;
 	failureDetected = 0;
 	pipe0_reading_address[0] = 0;
-	spi = new spi::SPIStm32f103();
+	this->spi = spi;
 	this->gpio = gpio;
 	this->syscall = syscall;
 }

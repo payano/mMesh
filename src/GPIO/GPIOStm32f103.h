@@ -43,7 +43,7 @@ public:
 	void set_pin(PINS pin, bool level) override;
 
 private:
-	void read_pin(PINS *pin, void *gpio_port, uint16_t *gpio_pin);
+	void read_pin(PINS *pin, GPIO_TypeDef **gpio_port, uint16_t *gpio_pin);
 };
 
 } /* namespace gpio */

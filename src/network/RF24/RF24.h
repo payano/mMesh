@@ -112,7 +112,7 @@ public:
 	 * @param _cspin The pin attached to Chip Select
 	 */
 //	RF24(uint16_t _cepin, uint16_t _cspin);
-	RF24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall);
+	RF24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall, spi::SPIInterface *spi);
 	virtual ~RF24();
 
 	/**

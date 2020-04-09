@@ -31,8 +31,8 @@ public:
 
 	virtual void setSPI(void *spidrv);
 
-//	SPIInterface();
 	virtual ~SPIInterface(){}
+
 
     /**
     * Start SPI

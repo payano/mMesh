@@ -36,13 +36,15 @@ private:
 	uint32_t cpu_speed;
 	uint16_t per;
 	uint16_t psc;
-	TIM_HandleTypeDef htim1;
+	TIM_HandleTypeDef *htim1;
+	bool firstRun;
 
 public:
-	STM32Syscalls();
+	STM32Syscalls(TIM_HandleTypeDef *htim1);
 	virtual ~STM32Syscalls();
 	void set_htim_parameters();
 
+	void init() override;
 	void set_cpu_speed(SPEED speed) override;
 	void usleep(int delay) override;
 	void msleep(int delay) override;

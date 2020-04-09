@@ -4,6 +4,7 @@
  *  Created on: Apr 6, 2020
  *      Author: evsejho
  */
+#ifdef UNIX
 
 #include "LinuxSyscalls.h"
 #include <chrono>
@@ -77,3 +78,4 @@ void LinuxSyscalls::armTimer(int ms)
 
 } /* namespace syscalls */
 
+#endif

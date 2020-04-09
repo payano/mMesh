@@ -34,14 +34,22 @@ namespace gpio {
 class GPIOInterface;
 }
 
+namespace spi {
+class SPIInterface;
+}
+namespace network {
+class RF24;
+}
+
 namespace network {
 
 class Nrf24 : public NetworkInterface {
 private:
-
+	bool isConnected;
+	RF24 *rf24;
 protected:
 public:
-	Nrf24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall);
+	Nrf24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall, spi::SPIInterface *spi);
 	virtual ~Nrf24();
 	void setSPI(void *spi) override;
 	int init() override;

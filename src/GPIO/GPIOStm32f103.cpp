@@ -45,7 +45,7 @@ bool GPIOStm32f103::isset(PINS pin) {
 	GPIO_TypeDef *gpio_port = nullptr;
 	uint16_t gpio_pin = 0;
 
-	read_pin(&pin, gpio_port, &gpio_pin);
+	read_pin(&pin, &gpio_port, &gpio_pin);
 	GPIO_PinState state = HAL_GPIO_ReadPin(gpio_port, gpio_pin);
 	return GPIO_PIN_SET == state ? true : false;
 };
@@ -55,23 +55,26 @@ void GPIOStm32f103::init_pins(struct gpio_pins *pins) {
 }
 
 void GPIOStm32f103::set_pin(PINS pin, bool level) {
-		GPIO_TypeDef *gpio_port = nullptr;
-		uint16_t gpio_pin = 0;
-
-		read_pin(&pin, gpio_port, &gpio_pin);
-		GPIO_PinState pin_state = level == true ? GPIO_PIN_SET : GPIO_PIN_RESET;
-		HAL_GPIO_WritePin(gpio_port, gpio_pin, pin_state);
+	GPIO_TypeDef *gpio_port = nullptr;
+	uint16_t gpio_pin = 0;
+	GPIO_PinState pin_state = level == true ? GPIO_PIN_SET : GPIO_PIN_RESET;
+	//
+//	read_pin(&pin, &gpio_port, &gpio_pin);
+	//		HAL_GPIO_WritePin(gpio_port, gpio_pin, pin_state);
+	gpio_port = RF24_CE_GPIO_Port;
+//	gpio_pin = RF24_CE_Pin;
+	HAL_GPIO_WritePin(gpio_port, gpio_pin, pin_state);
 };
 
 /* circular problems... */
-void GPIOStm32f103::read_pin(PINS *pin, void *gpio_port, uint16_t *gpio_pin) {
+void GPIOStm32f103::read_pin(PINS *pin, GPIO_TypeDef **gpio_port, uint16_t *gpio_pin) {
 	switch(*pin){
 	case PINS::CE_PIN:
-		gpio_port = static_cast<GPIO_TypeDef *>(pins->ce_port);
+		*gpio_port = pins->ce_port;
 		*gpio_pin = pins->ce_pin;
 		break;
 	case PINS::CSN_PIN:
-		gpio_port = static_cast<GPIO_TypeDef *>(pins->csn_port);
+		*gpio_port = pins->csn_port;
 		*gpio_pin = pins->csn_pin;
 		break;
 	/* don't create a default, or throw an exception in default. */

@@ -24,13 +24,15 @@ SOFTWARE.
 
 #pragma once
 #include "SPIInterface.h"
+#include "main.h"
 
 namespace spi {
 class SPIStm32f103 : public SPIInterface {
 private:
-	void *hspi;
+	SPI_HandleTypeDef *hspi;
 public:
-	SPIStm32f103();
+	SPIStm32f103() : hspi(nullptr){}
+	SPIStm32f103(SPI_HandleTypeDef *hspi);
 	virtual ~SPIStm32f103();
 	void setSPI(void *spidrv) override;
     void begin() override;

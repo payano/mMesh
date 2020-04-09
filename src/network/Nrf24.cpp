@@ -27,10 +27,11 @@ SOFTWARE.
 #include "RF24.h"
 namespace network {
 
-Nrf24::Nrf24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall)
+Nrf24::Nrf24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall, spi::SPIInterface *spi)
 {
-	RF24 olle(gpio, syscall);
-	olle.begin();
+	rf24 = new RF24(gpio, syscall, spi);
+
+	isConnected = rf24->isChipConnected();
 }
 
 Nrf24::~Nrf24()
@@ -39,6 +40,8 @@ Nrf24::~Nrf24()
 
 int Nrf24::init()
 {
+	isConnected = rf24->isChipConnected();
+
 	return 0;
 }
 

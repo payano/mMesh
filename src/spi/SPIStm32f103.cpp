@@ -27,7 +27,7 @@ SOFTWARE.
 #include "main.h"
 namespace spi {
 
-SPIStm32f103::SPIStm32f103() : hspi(nullptr)
+SPIStm32f103::SPIStm32f103(SPI_HandleTypeDef *hspi) : hspi(hspi)
 {
 	// TODO Auto-generated constructor stub
 
@@ -39,7 +39,7 @@ SPIStm32f103::~SPIStm32f103() {
 
 void SPIStm32f103::setSPI(void *spidrv)
 {
-	hspi = spidrv;
+	(void)spidrv;
 }
 
 
@@ -55,7 +55,7 @@ void SPIStm32f103::begin()
 */
 uint8_t SPIStm32f103::transfer(uint8_t tx) {
 	uint8_t ret;
-	SPI_HandleTypeDef *spi = static_cast<SPI_HandleTypeDef *>(hspi);
+	SPI_HandleTypeDef *spi = hspi;
 	HAL_SPI_TransmitReceive(spi, &tx, &ret, sizeof(uint8_t), 0);
 	return ret;
 }
@@ -67,7 +67,7 @@ uint8_t SPIStm32f103::transfer(uint8_t tx) {
 * @param len Length of the data
 */
 void SPIStm32f103::transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) {
-	SPI_HandleTypeDef *spi = static_cast<SPI_HandleTypeDef *>(hspi);
+	SPI_HandleTypeDef *spi = hspi;
 	HAL_SPI_TransmitReceive(spi, tbuf, rbuf, len, 0);
 }
 
@@ -77,7 +77,7 @@ void SPIStm32f103::transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) {
 * @param len Length of the data
 */
 void SPIStm32f103::transfern(uint8_t *buf, uint16_t len) {
-	SPI_HandleTypeDef *spi = static_cast<SPI_HandleTypeDef *>(hspi);
+	SPI_HandleTypeDef *spi = hspi;
 	HAL_SPI_Transmit(spi, buf, len, 0);
 }
 

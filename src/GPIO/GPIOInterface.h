@@ -25,13 +25,14 @@ SOFTWARE.
 #pragma once
 
 #include <stdint.h>
+#include "main.h"
 
 namespace gpio {
 
 struct gpio_pins{
-	void *ce_port;
+	GPIO_TypeDef *ce_port;
 	uint16_t ce_pin;
-	void *csn_port;
+	GPIO_TypeDef *csn_port;
 	uint16_t csn_pin;
 };
 

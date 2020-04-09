@@ -27,6 +27,7 @@ SOFTWARE.
  */
 
 #pragma once
+#ifdef UNIX
 
 #include "Mesh.h"
 #include "Islands.h"
@@ -86,4 +87,4 @@ public:
 };
 
 } /* namespace node */
-
+#endif
