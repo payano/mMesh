@@ -3,6 +3,11 @@ cmake_minimum_required(VERSION 3.10)
 if(UNIX)
 	add_definitions(-DUNIX) 
 endif (UNIX)
+
+if(APPLE)
+	add_definitions(-DUNIX) 
+endif (APPLE)
+
 project(hello_library)
 find_package (Threads REQUIRED)
 
