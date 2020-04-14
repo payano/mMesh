@@ -81,7 +81,7 @@ Mesh::Mesh(NetworkInterface *nw, syscalls::SyscallsInterface *syscall) : nw(nw),
 	statedata = new stateData;
 	algorithm = new NetAlgorithm::LazyAlgorithm();
 
-	networkHandler = new MeshNetworkHandler(this, network, nw, algorithm);
+	networkHandler = new MeshNetworkHandler(network, nw, algorithm);
 
 	initStateMachine();
 //	timerStarted = false;

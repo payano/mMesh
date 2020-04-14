@@ -42,9 +42,9 @@ public:
 	LinuxSyscalls();
 	virtual ~LinuxSyscalls();
 
-	void init() {}
+	void init() override {}
 	void set_cpu_speed(SPEED speed) override;
-	void usleep(int delay) override;
+	void microsleep(int delay) override;
 	void msleep(int delay) override;
 	int start_timer(int delay) override;
 	bool timer_started() override;

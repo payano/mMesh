@@ -36,7 +36,7 @@ public:
 	virtual ~SyscallsInterface(){}
 	virtual void init() = 0;
 	virtual void set_cpu_speed(SPEED speed) = 0;
-	virtual void usleep(int delay) = 0;
+	virtual void microsleep(int delay) = 0;
 	virtual void msleep(int delay) = 0;
 	virtual int start_timer(int delay) = 0;
 	virtual bool timer_started() = 0;

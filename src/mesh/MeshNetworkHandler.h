@@ -45,13 +45,13 @@ class NetworkInterface;
 namespace mesh {
 class MeshNetworkHandler : network::NetworkInterfaceSubscriber{
 private:
-	Mesh *mesh;
+//	Mesh *mesh;
 	NetworkData *network;  /*!< Detailed description after the member */
 	network::NetworkInterface *nw;
 	NetAlgorithm::NetAlgorithmInterface *algorithm;
 
 public:
-	MeshNetworkHandler(Mesh *mesh, NetworkData *network,
+	MeshNetworkHandler(NetworkData *network,
 	                   network::NetworkInterface *nw,
 	                   NetAlgorithm::NetAlgorithmInterface *algorithm);
 	virtual ~MeshNetworkHandler();

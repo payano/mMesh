@@ -32,10 +32,10 @@ SOFTWARE.
 
 namespace mesh {
 
-MeshNetworkHandler::MeshNetworkHandler(Mesh *mesh, NetworkData *network,
+MeshNetworkHandler::MeshNetworkHandler(NetworkData *network,
                                        network::NetworkInterface *nw,
                                        NetAlgorithm::NetAlgorithmInterface *algorithm):
-	mesh(mesh), network(network), nw(nw), algorithm(algorithm) {
+	network(network), nw(nw), algorithm(algorithm) {
 	nw->registerSubscriber(this);
 	// TODO Auto-generated constructor stub
 

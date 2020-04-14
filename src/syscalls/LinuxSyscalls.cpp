@@ -8,6 +8,7 @@
 
 #include "LinuxSyscalls.h"
 #include <chrono>
+#include <unistd.h>
 
 namespace syscalls {
 
@@ -30,7 +31,7 @@ void LinuxSyscalls::set_cpu_speed(SPEED speed) {
 }
 
 
-void LinuxSyscalls::usleep(int delay)
+void LinuxSyscalls::microsleep(int delay)
 {
 	usleep(delay);
 }
