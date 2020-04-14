@@ -350,7 +350,7 @@ TEST_F(NodeTest,Associate2Islands){
 }
 
 TEST_F(NodeTest,SeekNBAndParentsAndDisconnect){
-	struct net_address addr;
+	//struct net_address addr;
 	std::cout << "TESTING SeekNBAndParents" << std::endl;
 	std::cout << "Setting master" << std::endl;
 	master->setMaster();
