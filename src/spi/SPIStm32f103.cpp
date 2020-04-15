@@ -56,7 +56,7 @@ void SPIStm32f103::begin()
 uint8_t SPIStm32f103::transfer(uint8_t tx) {
 	uint8_t ret;
 	SPI_HandleTypeDef *spi = hspi;
-	HAL_SPI_TransmitReceive(spi, &tx, &ret, sizeof(uint8_t), 0);
+	HAL_SPI_TransmitReceive(spi, &tx, &ret, sizeof(uint8_t), 100);
 	return ret;
 }
 
@@ -68,7 +68,7 @@ uint8_t SPIStm32f103::transfer(uint8_t tx) {
 */
 void SPIStm32f103::transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) {
 	SPI_HandleTypeDef *spi = hspi;
-	HAL_SPI_TransmitReceive(spi, tbuf, rbuf, len, 0);
+	HAL_SPI_TransmitReceive(spi, tbuf, rbuf, len, 100);
 }
 
 /**
@@ -78,7 +78,7 @@ void SPIStm32f103::transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) {
 */
 void SPIStm32f103::transfern(uint8_t *buf, uint16_t len) {
 	SPI_HandleTypeDef *spi = hspi;
-	HAL_SPI_Transmit(spi, buf, len, 0);
+	HAL_SPI_Transmit(spi, buf, len, 100);
 }
 
 } /* namespace spi */

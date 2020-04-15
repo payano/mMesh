@@ -22,36 +22,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+
+#ifdef UNIX
 #pragma once
-#ifndef UNIX
 
-#include "SyscallsInterface.h"
-#include "main.h"
-#include <stdint.h>
+#include "GPIOInterface.h"
+namespace gpio {
 
-namespace syscalls {
-
-class STM32Syscalls : public SyscallsInterface {
-private:
-	uint32_t cpu_speed;
-	uint16_t per;
-	uint16_t psc;
-//	TIM_HandleTypeDef *htim1;
-	bool firstRun;
-
+class GPIOLinux : public GPIOInterface {
 public:
-	STM32Syscalls();
-	virtual ~STM32Syscalls();
-	void set_htim_parameters();
-
-	void init() override;
-	void set_cpu_speed(SPEED speed) override;
-	void microsleep(int delay) override;
-	void msleep(int delay) override;
-	int start_timer(int delay) override;
-	bool timer_started() override;
+	GPIOLinux();
+	virtual ~GPIOLinux();
+	int init() override {return 0;}
+	void deinit() override {}
+	bool isset(PINS pin) override {
+		(void)pin;
+		return true;}
+	void init_pins(struct gpio_pins *pins) override {
+		(void)pins;
+	}
+	void set_pin(PINS pin, bool level) override {
+		(void)pin;
+		(void)level;
+	}
 };
 
-} /* namespace syscalls */
+} /* namespace gpio */
 
 #endif

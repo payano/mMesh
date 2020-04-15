@@ -59,10 +59,12 @@ void GPIOStm32f103::set_pin(PINS pin, bool level) {
 	uint16_t gpio_pin = 0;
 	GPIO_PinState pin_state = level == true ? GPIO_PIN_SET : GPIO_PIN_RESET;
 	//
-//	read_pin(&pin, &gpio_port, &gpio_pin);
-	//		HAL_GPIO_WritePin(gpio_port, gpio_pin, pin_state);
-	gpio_port = RF24_CE_GPIO_Port;
+	read_pin(&pin, &gpio_port, &gpio_pin);
+			HAL_GPIO_WritePin(gpio_port, gpio_pin, pin_state);
+//	gpio_port = RF24_CE_GPIO_Port;
 //	gpio_pin = RF24_CE_Pin;
+//	gpio_port = RF24_CSN_GPIO_Port;
+//	gpio_pin = RF24_CSN_Pin;
 	HAL_GPIO_WritePin(gpio_port, gpio_pin, pin_state);
 };
 

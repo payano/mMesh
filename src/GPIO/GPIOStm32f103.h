@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifndef UNIX
 #pragma once
 #include "GPIOInterface.h"
 
@@ -47,4 +48,4 @@ private:
 };
 
 } /* namespace gpio */
-
+#endif

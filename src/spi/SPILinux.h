@@ -22,36 +22,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#ifdef UNIX
+
 #pragma once
-#ifndef UNIX
 
-#include "SyscallsInterface.h"
-#include "main.h"
-#include <stdint.h>
+#include "SPIInterface.h"
 
-namespace syscalls {
+namespace spi {
 
-class STM32Syscalls : public SyscallsInterface {
-private:
-	uint32_t cpu_speed;
-	uint16_t per;
-	uint16_t psc;
-//	TIM_HandleTypeDef *htim1;
-	bool firstRun;
-
+class SPILinux : public SPIInterface {
 public:
-	STM32Syscalls();
-	virtual ~STM32Syscalls();
-	void set_htim_parameters();
+	SPILinux();
+	virtual ~SPILinux();
 
-	void init() override;
-	void set_cpu_speed(SPEED speed) override;
-	void microsleep(int delay) override;
-	void msleep(int delay) override;
-	int start_timer(int delay) override;
-	bool timer_started() override;
+	void setSPI(void *spidrv) override {
+		(void) spidrv;
+	}
+	void begin() override {}
+	uint8_t transfer(uint8_t tx) override {
+		(void)tx;
+		return 0;
+	}
+	void transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) override {
+		(void)tbuf;
+		(void)rbuf;
+		(void)len;
+	}
+	void transfern(uint8_t *buf, uint16_t len) override {
+		(void)buf;
+		(void)len;
+	}
+
 };
 
-} /* namespace syscalls */
+} /* namespace spi */
 
 #endif

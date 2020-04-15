@@ -25,16 +25,22 @@ SOFTWARE.
 #pragma once
 
 #include <stdint.h>
+#ifndef UNIX
 #include "main.h"
+#endif
 
 namespace gpio {
 
+#ifndef UNIX
 struct gpio_pins{
 	GPIO_TypeDef *ce_port;
 	uint16_t ce_pin;
 	GPIO_TypeDef *csn_port;
 	uint16_t csn_pin;
 };
+#else
+struct gpio_pins;
+#endif
 
 enum PINS {
 CE_PIN,
@@ -52,3 +58,4 @@ public:
 };
 
 }
+
