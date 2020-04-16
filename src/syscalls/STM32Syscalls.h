@@ -28,7 +28,7 @@ SOFTWARE.
 #include "SyscallsInterface.h"
 #include "main.h"
 #include <stdint.h>
-
+#include "stm32f1xx_hal_tim.h"
 namespace syscalls {
 
 class STM32Syscalls : public SyscallsInterface {
@@ -36,11 +36,13 @@ private:
 	uint32_t cpu_speed;
 	uint16_t per;
 	uint16_t psc;
-//	TIM_HandleTypeDef *htim1;
+	TIM_HandleTypeDef *htim1;
 	bool firstRun;
 
 public:
-	STM32Syscalls();
+	STM32Syscalls(TIM_HandleTypeDef *htim1);
+
+//	STM32Syscalls();
 	virtual ~STM32Syscalls();
 	void set_htim_parameters();
 

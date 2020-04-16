@@ -10,7 +10,7 @@
 
 namespace syscalls {
 
-STM32Syscalls::STM32Syscalls() : cpu_speed(0), per(0), psc(0) {
+STM32Syscalls::STM32Syscalls(TIM_HandleTypeDef *htim1) : cpu_speed(0), per(0), psc(0), htim1(htim1) {
 	firstRun = false;
 	// TODO Auto-generated constructor stub
 
@@ -47,37 +47,37 @@ void STM32Syscalls::set_cpu_speed(SPEED speed) {
 
 void STM32Syscalls::set_htim_parameters()
 {
-//	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-//	TIM_MasterConfigTypeDef sMasterConfig = {0};
-//
-//	htim1->Instance = TIM1;
-////	htim1->Init.Prescaler = 10986;
-//	htim1->Init.Prescaler = psc;
-//	htim1->Init.CounterMode = TIM_COUNTERMODE_UP;
-////	htim1->Init.Period = 0x0fff;
-//	htim1->Init.Period = per;
-//	htim1->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-//	htim1->Init.RepetitionCounter = 0;
-//	htim1->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-//	if (HAL_TIM_Base_Init(htim1) != HAL_OK)
-//	{
-//		Error_Handler();
-//	}
-//	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-//	if (HAL_TIM_ConfigClockSource(htim1, &sClockSourceConfig) != HAL_OK)
-//	{
-//		Error_Handler();
-//	}
-//	if (HAL_TIM_OnePulse_Init(htim1, TIM_OPMODE_SINGLE) != HAL_OK)
-//	{
-//		Error_Handler();
-//	}
-//	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-//	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-//	if (HAL_TIMEx_MasterConfigSynchronization(htim1, &sMasterConfig) != HAL_OK)
-//	{
-//		Error_Handler();
-//	}
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+	htim1->Instance = TIM1;
+//	htim1->Init.Prescaler = 10986;
+	htim1->Init.Prescaler = psc;
+	htim1->Init.CounterMode = TIM_COUNTERMODE_UP;
+//	htim1->Init.Period = 0x0fff;
+	htim1->Init.Period = per;
+	htim1->Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim1->Init.RepetitionCounter = 0;
+	htim1->Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+	if (HAL_TIM_Base_Init(htim1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(htim1, &sClockSourceConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_TIM_OnePulse_Init(htim1, TIM_OPMODE_SINGLE) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(htim1, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
 }
 
 void STM32Syscalls::microsleep(int delay) {
@@ -107,11 +107,11 @@ int STM32Syscalls::start_timer(int delay) {
 	 * PSC = CPU_SPEED*(T*10^-3)/(ARR+1) -1
 	 */
 //	psc = cpu_speed*delay/(per+1) - 1;
-//	delay *= 0.001;
-//	psc = cpu_speed*delay/(per+1) - 1;
-//	set_htim_parameters();
-//	HAL_TIM_Base_Start(htim1);
-//	return 0;
+	delay *= 0.001;
+	psc = cpu_speed*delay/(per+1) - 1;
+	set_htim_parameters();
+	HAL_TIM_Base_Start(htim1);
+	return 0;
 }
 
 bool STM32Syscalls::timer_started() {
@@ -119,6 +119,7 @@ bool STM32Syscalls::timer_started() {
 //		return false;
 //	}
 //	return htim1->Instance->CNT != 0 ? true : false;
+	return true;
 }
 
 } /* namespace syscalls */
