@@ -6,7 +6,7 @@
  */
 
 #include "SPILinux.h"
-
+#ifdef UNIX
 namespace spi {
 
 SPILinux::SPILinux() {
@@ -19,3 +19,4 @@ SPILinux::~SPILinux() {
 }
 
 } /* namespace spi */
+#endif
