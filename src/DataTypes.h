@@ -292,6 +292,18 @@ int cmp_data(const T *first, const T *second, int sz) {
 	return 0;
 }
 
+template <typename T>
+int string_len(const T *string_in)
+{
+	int counter = 0;
+	const uint8_t *str = (const uint8_t *)string_in;
+	while(*str != '\0') {
+		++counter;
+		++str;
+	}
+	return counter;
+}
+
 class NetHelper{
 public:
 
