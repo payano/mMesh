@@ -145,7 +145,7 @@ private:
 			/* signed 32 bit */
 			int32_t value;
 
-			memcpy(&value, &first, sizeof(int32_t));
+			copy_data(&value, (int32_t*)&first, sizeof(int32_t));
 			int ff = int_to_ascii(value, final_string, 10, false);
 			final_string += ff;
 
@@ -153,7 +153,7 @@ private:
 			/* unsigned 32 bit */
 			uint32_t value;
 
-			memcpy(&value, &first, sizeof(uint32_t));
+			copy_data(&value, (uint32_t*)&first, sizeof(uint32_t));
 			int ff = int_to_ascii(value, final_string, 10, true);
 			final_string += ff;
 
