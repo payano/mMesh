@@ -29,6 +29,7 @@ SOFTWARE.
 #include "Islands.h"
 #include "Node.h"
 #include <chrono>
+#include "SyscallsInterface.h"
 
 constexpr int SLAVE_TO_MASTER(5);
 constexpr int SLAVE_COUNT(4);
@@ -188,7 +189,7 @@ TEST_F(NodeTest,StartNoAssignments){
 
 //		 Check if connected to parent
 		slave_to_master[i]->getParentAddress(&addr);
-		ASSERT_FALSE(!cmp_data(&MASTER, &addr, sizeof(addr)));
+		ASSERT_FALSE(!syscalls::SyscallsInterface::cmp_data(&MASTER, &addr, sizeof(addr)));
 		ASSERT_FALSE(slave_to_master[i]->getPaired());
 	}
 }

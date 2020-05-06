@@ -28,18 +28,18 @@ namespace mesh {
 
 NetworkData::NetworkData(syscalls::SyscallsInterface *syscalls) {
 	this->syscalls = syscalls;
-	mem_clr(&mac, sizeof(mac));
-	mem_clr(&parent.mac, sizeof(parent.mac));
+	syscalls::SyscallsInterface::mem_clr(&mac, sizeof(mac));
+	syscalls::SyscallsInterface::mem_clr(&parent.mac, sizeof(parent.mac));
 	pairedChildren = 0;
 	pairedNeighbours = 0;
 	registeredToMaster = false;
 	mPaired = false;
 	buffer_count = 0;
 	for(int i = 0 ; i < CHILDREN_SZ; ++i) {
-		mem_clr(&childs[i], sizeof(childs[i]));
+		syscalls::SyscallsInterface::mem_clr(&childs[i], sizeof(childs[i]));
 	}
 	for(int i = 0 ; i < NEIGHBOUR_SZ; ++i) {
-		mem_clr(&neighbours[i], sizeof(neighbours[i]));
+		syscalls::SyscallsInterface::mem_clr(&neighbours[i], sizeof(neighbours[i]));
 	}
 	// TODO Auto-generated constructor stub
 
@@ -54,7 +54,7 @@ void NetworkData::queue_clear(){buffer_count = 0;}
 int NetworkData::queue_add(union mesh_internal_msg *msg)
 {
 	if(buffer_count >= MSG_BUFFER) return -1;
-	copy_data(&queuedmsgs[buffer_count++], msg, sizeof(*msg));
+	syscalls::SyscallsInterface::copy_data(&queuedmsgs[buffer_count++], msg, sizeof(*msg));
 	return 0;
 }
 
@@ -65,11 +65,11 @@ int NetworkData::queue_get(union mesh_internal_msg *msg)
 	 */
 	if(buffer_count <= 0) return 1;
 
-	copy_data(msg, &queuedmsgs[0], sizeof(*msg));
+	syscalls::SyscallsInterface::copy_data(msg, &queuedmsgs[0], sizeof(*msg));
 
 	buffer_count--;
 	for(int i = 0 ; i < buffer_count; ++i) {
-		copy_data(&queuedmsgs[i], &queuedmsgs[i+1], sizeof(queuedmsgs[i]));
+		syscalls::SyscallsInterface::copy_data(&queuedmsgs[i], &queuedmsgs[i+1], sizeof(queuedmsgs[i]));
 	}
 
 	queuedmsgs[buffer_count].header.msgno = MSGNO::INVALID;
@@ -83,12 +83,12 @@ int NetworkData::remove_child_node(struct node_data *node,
 	for(int i = 0; i < CHILDREN_SZ; ++i, child++) {
 		// NEEDED?
 		if(false == child->connected) continue;
-		if(cmp_data(&node->mac, &child->mac, sizeof(node->mac))) continue;
-		mem_clr(disband_node, sizeof(*disband_node));
+		if(syscalls::SyscallsInterface::cmp_data(&node->mac, &child->mac, sizeof(node->mac))) continue;
+		syscalls::SyscallsInterface::mem_clr(disband_node, sizeof(*disband_node));
 
-		copy_data(disband_node, &child->mac, sizeof(child->mac));
+		syscalls::SyscallsInterface::copy_data(disband_node, &child->mac, sizeof(child->mac));
 		child->keepalive_count = 0;
-		mem_clr(&child->mac, sizeof(child->mac));
+		syscalls::SyscallsInterface::mem_clr(&child->mac, sizeof(child->mac));
 		child->connected = false;
 		pairedChildren--;
 		return 0;
@@ -157,7 +157,7 @@ int NetworkData::iterateNeighbours(struct node_data **node)
 
 int NetworkData::generate_child_address(struct net_address *address)
 {
-	mem_clr(address, sizeof(*address));
+	syscalls::SyscallsInterface::mem_clr(address, sizeof(*address));
 	int ret;
 	int child_addr = -1;
 	for(int i = 0; i < CHILDREN_SZ; ++i){
@@ -183,7 +183,7 @@ int NetworkData::generate_child_address(struct net_address *address)
 		return -1;
 	}
 	// Add it to parent neighbour list
-	copy_data(&childs[child_addr-1].mac, address, sizeof(*address));
+	syscalls::SyscallsInterface::copy_data(&childs[child_addr-1].mac, address, sizeof(*address));
 	return 0;
 }
 
@@ -197,7 +197,7 @@ void NetworkData::updateChildCounter(const struct net_address *node)
 
 void NetworkData::updateParentCounter(const struct net_address *node)
 {
-	if(cmp_data(node,&parent.mac, sizeof(parent.mac))) return;
+	if(syscalls::SyscallsInterface::cmp_data(node,&parent.mac, sizeof(parent.mac))) return;
 	parent.keepalive_count = TIMER_KEEPALIVE;
 }
 
@@ -213,7 +213,7 @@ struct node_data *NetworkData::findChild(const struct net_address *child)
 	struct node_data *nwd_child = childs;
 	for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_child) {
 		if(false == nwd_child->connected) continue;
-		if(cmp_data(child, &nwd_child->mac, sizeof(*child))) continue;
+		if(syscalls::SyscallsInterface::cmp_data(child, &nwd_child->mac, sizeof(*child))) continue;
 		return nwd_child;
 	}
 	return nullptr;
@@ -224,7 +224,7 @@ struct node_data *NetworkData::findNeighbour(const struct net_address *neighbour
 	struct node_data *nwd_nb = neighbours;
 	for(int i = 0; i < CHILDREN_SZ; ++i, ++nwd_nb) {
 		if(false == nwd_nb->connected) continue;
-		if(cmp_data(neighbour, &nwd_nb->mac, sizeof(*neighbour))) continue;
+		if(syscalls::SyscallsInterface::cmp_data(neighbour, &nwd_nb->mac, sizeof(*neighbour))) continue;
 		return nwd_nb;
 	}
 	return nullptr;
