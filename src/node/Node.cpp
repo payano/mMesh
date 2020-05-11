@@ -56,11 +56,7 @@ void Node::setAddr(){
 	// Need to set a random number:
 	/* initialize random seed: */
 
-	struct net_address mac;
-	NetHelper::generate_temporary_address(&mac);
-//	printf("generated address\n");
-//	NetHelper::printf_address(&mac);
-	mesh->setTemporaryMacAddr(&mac);
+	mesh->set_generated_mac_addr();
 
 }
 

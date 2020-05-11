@@ -77,7 +77,7 @@ struct stateData {
 };
 
 Mesh::Mesh(NetworkInterface *nw, syscalls::SyscallsInterface *syscall) : nw(nw), syscall(syscall) {
-	network = new NetworkData;
+	network = new NetworkData(syscall);
 	statedata = new stateData;
 	algorithm = new NetAlgorithm::LazyAlgorithm();
 
@@ -139,6 +139,12 @@ bool Mesh::setTemporaryMacAddr(const struct net_address *mac){
 	copy_data(&network->mac, mac, sizeof(*mac));
 	nw->setAddr(mac);
 	return true;
+}
+
+void Mesh::set_generated_mac_addr()
+{
+	network->generate_temporary_address(&network->mac);
+	nw->setAddr(&network->mac);
 }
 
 bool Mesh::getPaired(){ return network->mPaired;}
@@ -501,8 +507,8 @@ void Mesh::check_children_keepalive_timers()
 {
 	struct node_data *current = nullptr;
 	while(network->iterateChilds(&current)){
-		if(!NetHelper::checkConnected(current)) continue;
-		if(!NetHelper::check_timer_zero(current)) continue;
+		if(!network->checkConnected(current)) continue;
+		if(!network->check_timer_zero(current)) continue;
 		networkHandler->doDisconnectChildReq(current);
 	}
 	statedata->started_state = STARTED_STATE::STARTED_IDLE;
@@ -512,8 +518,8 @@ void Mesh::check_neighbour_keepalive_timers()
 {
 	struct node_data *current = nullptr;
 	while(network->iterateNeighbours(&current)){
-		if(!NetHelper::checkConnected(current)) continue;
-		if(!NetHelper::check_timer_zero(current)) continue;
+		if(!network->checkConnected(current)) continue;
+		if(!network->check_timer_zero(current)) continue;
 		/* just disconnect the neighbour, we are not obliged to tell the nb
 		 */
 		current->connected = false;

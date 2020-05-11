@@ -28,12 +28,16 @@ SOFTWARE.
 
 using uint = unsigned int;
 
+namespace syscalls {
+class SyscallsInterface;
+}
 namespace mesh {
 
 class NetworkData {
 private:
 	union mesh_internal_msg queuedmsgs[MSG_BUFFER];
 	int buffer_count;
+	syscalls::SyscallsInterface *syscalls;
 public:
 	int pairedChildren;
 	int pairedNeighbours;
@@ -44,7 +48,8 @@ public:
 	struct node_data parent;
 	net_address mac;
 
-	NetworkData();
+	NetworkData(); /* remove me */
+	NetworkData(syscalls::SyscallsInterface *syscalls);
 	virtual ~NetworkData();
 
 	int queue_sz();
@@ -65,9 +70,14 @@ public:
 	void updateChildCounter(const struct net_address *node);
 	void updateParentCounter(const struct net_address *node);
 	void updateNeighbourCounter(const struct net_address *node);
+	void generate_temporary_address(struct net_address *address);
+	bool check_timer_zero(struct node_data *node);
+	bool checkConnected(struct node_data *node);
 
 
 private:
+	uint8_t generate_number(int max_number);
+
 	struct node_data *findChild(const struct net_address *child);
 	struct node_data *findNeighbour(const struct net_address *child);
 

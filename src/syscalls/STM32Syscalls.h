@@ -37,10 +37,12 @@ private:
 	uint16_t per;
 	uint16_t psc;
 	TIM_HandleTypeDef *htim1;
+	ADC_HandleTypeDef *hadc1;
+
 	bool firstRun;
 
 public:
-	STM32Syscalls(TIM_HandleTypeDef *htim1);
+	STM32Syscalls(TIM_HandleTypeDef *htim1, ADC_HandleTypeDef *hadc1);
 
 //	STM32Syscalls();
 	virtual ~STM32Syscalls();
@@ -52,6 +54,7 @@ public:
 	void msleep(int delay) override;
 	int start_timer(int delay) override;
 	bool timer_started() override;
+	int get_random() override;
 };
 
 } /* namespace syscalls */

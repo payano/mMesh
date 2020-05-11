@@ -91,7 +91,7 @@ public:
 	bool getRegisteredToMaster();
 	int getNeighbourCount();
 	char *getName();
-
+	void set_generated_mac_addr();
 private:
 	/* Timer */
 	void timerCallback(int ms);

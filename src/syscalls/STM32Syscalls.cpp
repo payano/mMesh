@@ -10,7 +10,9 @@
 
 namespace syscalls {
 
-STM32Syscalls::STM32Syscalls(TIM_HandleTypeDef *htim1) : cpu_speed(0), per(0), psc(0), htim1(htim1) {
+STM32Syscalls::STM32Syscalls(TIM_HandleTypeDef *htim1, ADC_HandleTypeDef *hadc1)
+: cpu_speed(0), per(0), psc(0), htim1(htim1), hadc1(hadc1)
+{
 	firstRun = false;
 	// TODO Auto-generated constructor stub
 
@@ -121,6 +123,33 @@ bool STM32Syscalls::timer_started() {
 //	return htim1->Instance->CNT != 0 ? true : false;
 	return true;
 }
+
+int STM32Syscalls::get_random()
+{
+	constexpr float V25 = 1.43;
+	constexpr float average_slope = 4.3;
+
+	int randomness, readval;
+	HAL_ADC_Start(hadc1);
+	HAL_ADC_PollForConversion(hadc1, 1000);
+	readval = HAL_ADC_GetValue(hadc1);
+	HAL_ADC_Stop(hadc1);
+
+	randomness = ((V25 * readval) / average_slope) * 100000;
+	return (uint32_t) randomness;
+
+//	random_val = random_val << 32;
+//	HAL_ADC_Start(hadc1);
+//	HAL_ADC_PollForConversion(hadc1, 1000);
+//	readval = HAL_ADC_GetValue(hadc1);
+//	HAL_ADC_Stop(hadc1);
+//	HAL_Delay(1000);
+//
+//	randomness = ((V25 * readval) / average_slope) * 100000;
+//	random_val |= (uint32_t) randomness;
+//	return 0;
+}
+
 
 } /* namespace syscalls */
 

@@ -9,6 +9,7 @@
 #include "LinuxSyscalls.h"
 #include <chrono>
 #include <unistd.h>
+#include <stdlib.h>
 
 namespace syscalls {
 
@@ -67,6 +68,11 @@ int LinuxSyscalls::start_timer(int delay)
 bool LinuxSyscalls::timer_started()
 {
 	return timerStarted;
+}
+
+int LinuxSyscalls::get_random()
+{
+	return rand();
 }
 
 void LinuxSyscalls::armTimer(int ms)

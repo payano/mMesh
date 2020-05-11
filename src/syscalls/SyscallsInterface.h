@@ -25,7 +25,6 @@ SOFTWARE.
 #pragma once
 
 namespace syscalls {
-
 enum SPEED {
 	SPEED_UNSET,
 	SPEED_72MHZ,
@@ -40,6 +39,7 @@ public:
 	virtual void msleep(int delay) = 0;
 	virtual int start_timer(int delay) = 0;
 	virtual bool timer_started() = 0;
+	virtual int get_random() = 0;
 
 };
 

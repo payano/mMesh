@@ -23,10 +23,15 @@ SOFTWARE.
 */
 
 #include "NetworkData.h"
-
+#include "SyscallsInterface.h"
 namespace mesh {
 
 NetworkData::NetworkData() {
+
+}
+
+NetworkData::NetworkData(syscalls::SyscallsInterface *syscalls) {
+	this->syscalls = syscalls;
 	mem_clr(&mac, sizeof(mac));
 	mem_clr(&parent.mac, sizeof(parent.mac));
 	pairedChildren = 0;
@@ -248,5 +253,31 @@ int NetworkData::getNewChildAddress(const struct net_address *parent,
 	}
 	return -1;
 }
+
+
+void NetworkData::generate_temporary_address(struct net_address *address) {
+	address->broadcast = 0;
+	address->master = 0;
+	address->gen_addr = 1;
+	for(int i = 0 ; i < NET_COUNT; ++i) {
+		address->nbs[i].net = generate_number(NUM_ADDRESSES);
+	}
+	address->host_addr = generate_number(NUM_ADDRESSES);
+}
+
+uint8_t NetworkData::generate_number(int max_number){
+	return syscalls->get_random() % max_number;
+}
+
+/* Should be moved to a class*/
+bool NetworkData::check_timer_zero(struct node_data *node){
+	return node->keepalive_count == 0 ? true : false;
+}
+
+/* Should be moved to a class*/
+bool NetworkData::checkConnected(struct node_data *node){
+	return node->connected == true ? true : false;
+}
+
 
 }

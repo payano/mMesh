@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include "SyscallsInterface.h"
 #include <thread>
+#include <stdint.h>
 
 //#if defined(_GLIBCXX_HAS_GTHREADS) && defined(_GLIBCXX_USE_C99_STDINT_TR1)
 
@@ -48,6 +49,7 @@ public:
 	void msleep(int delay) override;
 	int start_timer(int delay) override;
 	bool timer_started() override;
+	int get_random() override;
 private:
 	void armTimer(int ms);
 	void timerCallback(int ms);

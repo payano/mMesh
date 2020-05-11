@@ -306,41 +306,6 @@ int string_len(const T *string_in)
 
 class NetHelper{
 public:
-
-	/* Should be moved to a class*/
-	static bool check_timer_zero(struct node_data *node){
-		return node->keepalive_count == 0 ? true : false;
-	}
-
-	/* Should be moved to a class*/
-	static bool checkConnected(struct node_data *node){
-		return node->connected == true ? true : false;
-	}
-
-//	static bool compare_net_address(const struct net_address *one, const struct net_address *two)
-//	{
-//		return cmp_data(one, two, sizeof(*one)) == 0 ? true : false;
-//	}
-//
-//	static void copy_net_address(struct net_address *to, const struct net_address *from)
-//	{
-//		copy_data(to, from, sizeof(*from));
-//	}
-//
-//	static void clear_net_address(struct net_address *address) {
-//		mem_clr(address, sizeof(*address));
-//	}
-
-	static void generate_temporary_address(struct net_address *address) {
-		address->broadcast = 0;
-		address->master = 0;
-		address->gen_addr = 1;
-		for(int i = 0 ; i < NET_COUNT; ++i) {
-			address->nbs[i].net = generate_number(NUM_ADDRESSES);
-		}
-		address->host_addr = generate_number(NUM_ADDRESSES);
-	}
-
 	static void printf_address(const struct net_address *address) {
 		printf("broadcast: %d, "
 				"master: %d, "
@@ -385,11 +350,6 @@ public:
 		return "MSGNO DOESN'T EXIST";
 	}
 
-
-	static uint8_t generate_number(int max_number){
-		(void) max_number;
-		return rand() % NUM_ADDRESSES;
-	}
 	NetHelper(){};
 
 };
