@@ -35,6 +35,11 @@ SOFTWARE.
 
 #include "Constants.h"
 
+#define ARCH64 8
+#define ARCH32 4
+#define ARCH16 2
+#define ARCH8  1
+
 // 5 Bytes = 40 bits in total
 // Net address is 4 Bytes = 32 Bits
 struct net_address {
@@ -254,55 +259,6 @@ union mesh_internal_msg {
 	struct message_req             message_req;
 	struct message_rsp             message_rsp;
 };
-
-template <typename T>
-void copy_data(T *to, const T *from, int sz) {
-	void *void_to = static_cast<void*>(to);
-	const void *void_from = static_cast<const void*>(from);
-	uint8_t *to_d = static_cast<uint8_t*>(void_to);
-	const uint8_t *from_d = static_cast<const uint8_t*>(void_from);
-	for(int i = 0 ; i < sz ; ++i){
-		*to_d = *from_d;
-		++to_d;
-		++from_d;
-	}
-}
-
-template <typename T>
-void mem_clr(T *buffer, int sz) {
-	void *void_buffer = static_cast<void*>(buffer);
-	uint8_t *buffer_d = static_cast<uint8_t*>(void_buffer);
-	for(int i = 0 ; i < sz ; ++i){
-		*buffer_d = 0;
-		++buffer_d;
-	}
-}
-
-template <typename T>
-int cmp_data(const T *first, const T *second, int sz) {
-	const void *void_first = static_cast<const void*>(first);
-	const void *void_second = static_cast<const void*>(second);
-	const uint8_t *first_d = static_cast<const uint8_t*>(void_first);
-	const uint8_t *second_d = static_cast<const uint8_t*>(void_second);
-	for(int i = 0 ; i < sz ; ++i){
-		if(*first_d != *second_d) return -1;
-		++first_d;
-		++second_d;
-	}
-	return 0;
-}
-
-template <typename T>
-int string_len(const T *string_in)
-{
-	int counter = 0;
-	const uint8_t *str = (const uint8_t *)string_in;
-	while(*str != '\0') {
-		++counter;
-		++str;
-	}
-	return counter;
-}
 
 class NetHelper{
 public:

@@ -20,7 +20,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-*/
+ */
 
 #pragma once
 
@@ -31,6 +31,7 @@ SOFTWARE.
 #include "NetworkData.h"
 #include "DataTypes.h"
 #include "LinuxSyscalls.h"
+#include "SyscallsInterface.h"
 
 namespace NetAlgorithm {
 const constexpr int testAddresses(5);
@@ -48,7 +49,7 @@ public:
 		std::cout << __FUNCTION__ << std::endl;
 		algorithm = new LazyAlgorithm();
 		for(int i = 0; i < testAddresses; ++i) {
-			mem_clr(&testnodes[i], sizeof(testnodes[i]));
+			syscalls::SyscallsInterface::mem_clr(&testnodes[i], sizeof(testnodes[i]));
 		}
 	}
 
@@ -155,26 +156,26 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 	// Addresses configured, try to test to routing.
 	struct net_address dest_addr;
 	const struct net_address *route_addr;
-	mem_clr(&dest_addr, sizeof(dest_addr));
+	syscalls::SyscallsInterface::mem_clr(&dest_addr, sizeof(dest_addr));
 
 	// This shall go to testnodes[3]
 	dest_addr.master = 0x1;
 	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
-	ret = cmp_data(route_addr, &testnodes[3],
-	               sizeof(*route_addr));
+	ret = syscalls::SyscallsInterface::cmp_data(route_addr, &testnodes[3],
+	                                            sizeof(*route_addr));
 	ASSERT_FALSE(ret);
 
 	// This shall go to testnodes[0]
-	mem_clr(&dest_addr, sizeof(dest_addr));
+	syscalls::SyscallsInterface::mem_clr(&dest_addr, sizeof(dest_addr));
 	dest_addr.nbs[0].net = 0x5;
 	dest_addr.nbs[1].net = 0x4;
 	dest_addr.nbs[2].net = 0x3;
 	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
-	ret = cmp_data(route_addr, &testnodes[0], sizeof(*route_addr));
+	ret = syscalls::SyscallsInterface::cmp_data(route_addr, &testnodes[0], sizeof(*route_addr));
 	ASSERT_FALSE(ret);
 
 	// This shall go to testnodes[1]
-	mem_clr(&dest_addr, sizeof(dest_addr));
+	syscalls::SyscallsInterface::mem_clr(&dest_addr, sizeof(dest_addr));
 	dest_addr.nbs[0].net = 0x2;
 	dest_addr.nbs[1].net = 0x3;
 	dest_addr.nbs[2].net = 0x3;
@@ -184,11 +185,11 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 	dest_addr.nbs[6].net = 0x2;
 	dest_addr.nbs[7].net = 0x2;
 	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
-	ret = cmp_data(route_addr, &testnodes[1], sizeof(*route_addr));
+	ret = syscalls::SyscallsInterface::cmp_data(route_addr, &testnodes[1], sizeof(*route_addr));
 	ASSERT_FALSE(ret);
 
 	// This shall go to testnodes[2]
-	mem_clr(&dest_addr, sizeof(dest_addr));
+	syscalls::SyscallsInterface::mem_clr(&dest_addr, sizeof(dest_addr));
 	dest_addr.nbs[0].net = 0x5;
 	dest_addr.nbs[1].net = 0x4;
 	dest_addr.nbs[2].net = 0x4;
@@ -197,7 +198,7 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 	dest_addr.nbs[5].net = 0x4;
 	dest_addr.nbs[6].net = 0x4;
 	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
-	ret = cmp_data(route_addr, &testnodes[2], sizeof(*route_addr));
+	ret = syscalls::SyscallsInterface::cmp_data(route_addr, &testnodes[2], sizeof(*route_addr));
 	ASSERT_FALSE(ret);
 
 }

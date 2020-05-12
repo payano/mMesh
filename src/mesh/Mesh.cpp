@@ -132,11 +132,11 @@ void Mesh::setName(char *name)
 }
 
 void Mesh::getParent(struct net_address *addr){
-	copy_data(addr, &network->parent.mac, sizeof(*addr));
+	syscalls::SyscallsInterface::copy_data(addr, &network->parent.mac, sizeof(*addr));
 }
 
 bool Mesh::setTemporaryMacAddr(const struct net_address *mac){
-	copy_data(&network->mac, mac, sizeof(*mac));
+	syscalls::SyscallsInterface::copy_data(&network->mac, mac, sizeof(*mac));
 	nw->setAddr(mac);
 	return true;
 }
@@ -524,7 +524,7 @@ void Mesh::check_neighbour_keepalive_timers()
 		 */
 		current->connected = false;
 		current->keepalive_count = 0;
-		mem_clr(&current->mac, sizeof(current->mac));
+		syscalls::SyscallsInterface::mem_clr(&current->mac, sizeof(current->mac));
 		network->pairedNeighbours--;
 	}
 	statedata->started_state = STARTED_STATE::STARTED_IDLE;

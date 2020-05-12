@@ -25,7 +25,7 @@ SOFTWARE.
 #include "LazyAlgorithm.h"
 #include "DataTypes.h"
 #include "NetworkData.h"
-
+#include "SyscallsInterface.h"
 namespace NetAlgorithm {
 
 LazyAlgorithm::LazyAlgorithm() : rank(2){
@@ -49,7 +49,7 @@ const struct net_address *LazyAlgorithm::getRouteForPacket(const mesh::NetworkDa
 		if(!nw->neighbours[i].connected) continue;
 		bool nb_parent = is_child_of(&nw->neighbours[i].mac, to, false);
 		bool to_parent = is_child_of(to, &nw->neighbours[i].mac, false);
-		bool same_addr = !cmp_data(&nw->neighbours[i].mac, to, sizeof(*to));
+		bool same_addr = !syscalls::SyscallsInterface::cmp_data(&nw->neighbours[i].mac, to, sizeof(*to));
 
 		if(nb_parent || to_parent || same_addr)
 			return &nw->neighbours[i].mac;
@@ -69,7 +69,7 @@ const struct net_address *LazyAlgorithm::getRouteForPacket(const mesh::NetworkDa
 		if(true == childOf)
 			return &nw->childs[i].mac;
 
-		if(!cmp_data(to, &nw->childs[i].mac, sizeof(*to)))
+		if(!syscalls::SyscallsInterface::cmp_data(to, &nw->childs[i].mac, sizeof(*to)))
 			return to;
 	}
 
@@ -96,7 +96,7 @@ int LazyAlgorithm::choose_parent_from_list(mesh::NetworkData *nw,
 		return -1;
 	}
 
-	copy_data(parent, &queue_msg.associate_rsp.parent_address, sizeof(*parent));
+	syscalls::SyscallsInterface::copy_data(parent, &queue_msg.associate_rsp.parent_address, sizeof(*parent));
 	return 0;
 }
 
@@ -163,7 +163,7 @@ int LazyAlgorithm::evaluate_nb_address(mesh::NetworkData *nw,
 	/* need to check so it is not added already */
 	for(int i = 0 ; i < NEIGHBOUR_SZ ; i++) {
 		if(!nw->neighbours[i].connected) continue;
-		if(!cmp_data(nb_address, &nw->neighbours[i].mac, sizeof(*nb_address)))
+		if(!syscalls::SyscallsInterface::cmp_data(nb_address, &nw->neighbours[i].mac, sizeof(*nb_address)))
 			return 0;
 	}
 //
@@ -175,7 +175,7 @@ int LazyAlgorithm::evaluate_nb_address(mesh::NetworkData *nw,
 	for(int i = 0; i < NEIGHBOUR_SZ; ++i) {
 		if(nw->neighbours[i].connected) continue;
 
-		copy_data(&nw->neighbours[nw->pairedNeighbours].mac, nb_address,
+		syscalls::SyscallsInterface::copy_data(&nw->neighbours[nw->pairedNeighbours].mac, nb_address,
 		          sizeof(*nb_address));
 		nw->neighbours[i].connected = true;
 		nw->neighbours[i].keepalive_count = TIMER_KEEPALIVE;

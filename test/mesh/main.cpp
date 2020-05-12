@@ -24,9 +24,10 @@ SOFTWARE.
 
 #ifdef UNIX
 #include "gtest/gtest.h"
-#include "NodeTest.h"
+#include "SyscallsTest.h"
 #include "LazyAlgorithmTest.h"
 #include "NRF24Test.h"
+#include "NodeTest.h"
 
 // Look in nodetest.h
 

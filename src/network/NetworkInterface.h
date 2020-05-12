@@ -27,6 +27,7 @@ SOFTWARE.
 #include <stdint.h>
 #include "NetworkInterfacePublisher.h"
 #include "DataTypes.h"
+#include "SyscallsInterface.h"
 namespace network {
 
 /*! \brief Base class for Network Interfaces.
@@ -43,8 +44,12 @@ public:
 	virtual int start() = 0;
 	virtual int sendto(const struct net_address *dest, union mesh_internal_msg *msg) = 0;
 	virtual void recv_from(union mesh_internal_msg *msg) = 0;
-	void setAddr(const struct net_address *addr) {copy_data(&mac, addr, sizeof(*addr));}
-	void getAddr(struct net_address *addr) {copy_data(addr, &mac, sizeof(*addr));}
+	void setAddr(const struct net_address *addr) {
+		syscalls::SyscallsInterface::copy_data(&mac, addr, sizeof(*addr));
+	}
+	void getAddr(struct net_address *addr) {
+		syscalls::SyscallsInterface::copy_data(addr, &mac, sizeof(*addr));
+	}
 	virtual ~NetworkInterface(){}
 };
 

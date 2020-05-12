@@ -133,7 +133,7 @@ void Island::sendMessage(const struct net_address *to_addr,
 			struct net_address addr;
 			member->nw->getAddr(&addr);
 			// The one sending a broadcast can't also receive it.
-			if(!cmp_data(&addr, &msg->associate_req.from_addr, sizeof(addr)))
+			if(!syscalls::SyscallsInterface::cmp_data(&addr, &msg->associate_req.from_addr, sizeof(addr)))
 				continue;
 			sendMembers.push_back(member);
 
@@ -151,7 +151,7 @@ void Island::sendMessage(const struct net_address *to_addr,
 		for(node::Node* member : members){
 			struct net_address addr;
 			member->nw->getAddr(&addr);
-			if(!cmp_data(to_addr, &addr, sizeof(addr))) {
+			if(!syscalls::SyscallsInterface::cmp_data(to_addr, &addr, sizeof(addr))) {
 				member->nw->recv_from(msg);
 			}
 		}
