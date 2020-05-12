@@ -30,6 +30,7 @@ SOFTWARE.
 #include "NetAlgorithmInterface.h"
 #include "NetworkData.h"
 #include "DataTypes.h"
+#include "LinuxSyscalls.h"
 
 namespace NetAlgorithm {
 const constexpr int testAddresses(5);
@@ -37,10 +38,13 @@ const constexpr int testAddresses(5);
 class LazyAlgorithmTest : public ::testing::Test {
 public:
 	NetAlgorithmInterface *algorithm;
-	mesh::NetworkData networkdata;
+	syscalls::SyscallsInterface *syscalls;
+	mesh::NetworkData *networkdata;
 	struct net_address testnodes[testAddresses];
 
-	virtual void SetUp() override {
+	void SetUp() override {
+		syscalls = new syscalls::LinuxSyscalls();
+		networkdata = new mesh::NetworkData(syscalls);
 		std::cout << __FUNCTION__ << std::endl;
 		algorithm = new LazyAlgorithm();
 		for(int i = 0; i < testAddresses; ++i) {
@@ -48,15 +52,17 @@ public:
 		}
 	}
 
-	virtual void TearDown() override {
+	void TearDown() override {
 		std::cout << __FUNCTION__ << std::endl;
+		delete networkdata;
+		delete syscalls;
 		delete algorithm;
 	}
 };
 
 TEST_F(LazyAlgorithmTest,TestNBs){
 	int ret;
-	networkdata.mac.nbs[0].net = 0x1; // Connected to master
+	networkdata->mac.nbs[0].net = 0x1; // Connected to master
 
 	testnodes[0].nbs[0].net = 0x2;
 
@@ -74,40 +80,40 @@ TEST_F(LazyAlgorithmTest,TestNBs){
 
 	testnodes[4].master = 0x1;
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[0]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[0]);
 	ASSERT_FALSE(ret);
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[1]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[1]);
 	ASSERT_FALSE(ret);
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[2]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[2]);
 	ASSERT_FALSE(ret);
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[3]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[3]);
 	ASSERT_TRUE(ret);
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[4]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[4]);
 	ASSERT_FALSE(ret);
 }
 
 TEST_F(LazyAlgorithmTest,TestRouting){
 	int ret;
-	networkdata.mac.nbs[0].net = 0x1;
-	networkdata.mac.nbs[1].net = 0x1;
-	networkdata.mac.nbs[2].net = 0x1;
-	networkdata.registeredToMaster = 1;
-	networkdata.mPaired = 1;
+	networkdata->mac.nbs[0].net = 0x1;
+	networkdata->mac.nbs[1].net = 0x1;
+	networkdata->mac.nbs[2].net = 0x1;
+	networkdata->registeredToMaster = 1;
+	networkdata->mPaired = 1;
 
-	networkdata.parent.connected = true;
-	networkdata.parent.mac.nbs[0].net = 0x1;
-	networkdata.parent.mac.nbs[1].net = 0x1;
+	networkdata->parent.connected = true;
+	networkdata->parent.mac.nbs[0].net = 0x1;
+	networkdata->parent.mac.nbs[1].net = 0x1;
 
-	networkdata.pairedChildren = 1;
-	networkdata.childs[0].connected = 1;
-	networkdata.childs[0].mac.nbs[0].net = 0x1;
-	networkdata.childs[0].mac.nbs[1].net = 0x1;
-	networkdata.childs[0].mac.nbs[2].net = 0x1;
-	networkdata.childs[0].mac.nbs[3].net = 0x4;
+	networkdata->pairedChildren = 1;
+	networkdata->childs[0].connected = 1;
+	networkdata->childs[0].mac.nbs[0].net = 0x1;
+	networkdata->childs[0].mac.nbs[1].net = 0x1;
+	networkdata->childs[0].mac.nbs[2].net = 0x1;
+	networkdata->childs[0].mac.nbs[3].net = 0x4;
 
 	testnodes[0].nbs[0].net = 0x5;
 	testnodes[0].nbs[1].net = 0x4;
@@ -134,16 +140,16 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 	testnodes[3].master = 0x1;
 
 	// Add nodes to neighbors
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[0]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[0]);
 	ASSERT_TRUE(ret);
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[1]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[1]);
 	ASSERT_TRUE(ret);
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[2]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[2]);
 	ASSERT_TRUE(ret);
 
-	ret = algorithm->evaluate_nb_address(&networkdata, &testnodes[3]);
+	ret = algorithm->evaluate_nb_address(networkdata, &testnodes[3]);
 	ASSERT_TRUE(ret);
 
 	// Addresses configured, try to test to routing.
@@ -153,7 +159,7 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 
 	// This shall go to testnodes[3]
 	dest_addr.master = 0x1;
-	route_addr = algorithm->getRouteForPacket(&networkdata, &dest_addr);
+	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
 	ret = cmp_data(route_addr, &testnodes[3],
 	               sizeof(*route_addr));
 	ASSERT_FALSE(ret);
@@ -163,7 +169,7 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 	dest_addr.nbs[0].net = 0x5;
 	dest_addr.nbs[1].net = 0x4;
 	dest_addr.nbs[2].net = 0x3;
-	route_addr = algorithm->getRouteForPacket(&networkdata, &dest_addr);
+	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
 	ret = cmp_data(route_addr, &testnodes[0], sizeof(*route_addr));
 	ASSERT_FALSE(ret);
 
@@ -177,7 +183,7 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 	dest_addr.nbs[5].net = 0x3;
 	dest_addr.nbs[6].net = 0x2;
 	dest_addr.nbs[7].net = 0x2;
-	route_addr = algorithm->getRouteForPacket(&networkdata, &dest_addr);
+	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
 	ret = cmp_data(route_addr, &testnodes[1], sizeof(*route_addr));
 	ASSERT_FALSE(ret);
 
@@ -190,7 +196,7 @@ TEST_F(LazyAlgorithmTest,TestRouting){
 	dest_addr.nbs[4].net = 0x4;
 	dest_addr.nbs[5].net = 0x4;
 	dest_addr.nbs[6].net = 0x4;
-	route_addr = algorithm->getRouteForPacket(&networkdata, &dest_addr);
+	route_addr = algorithm->getRouteForPacket(networkdata, &dest_addr);
 	ret = cmp_data(route_addr, &testnodes[2], sizeof(*route_addr));
 	ASSERT_FALSE(ret);
 

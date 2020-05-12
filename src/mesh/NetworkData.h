@@ -48,7 +48,6 @@ public:
 	struct node_data parent;
 	net_address mac;
 
-	NetworkData(); /* remove me */
 	NetworkData(syscalls::SyscallsInterface *syscalls);
 	virtual ~NetworkData();
 

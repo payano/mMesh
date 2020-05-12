@@ -55,7 +55,6 @@ Node::Node(network::NetworkInterface *nw) {
 void Node::setAddr(){
 	// Need to set a random number:
 	/* initialize random seed: */
-
 	mesh->set_generated_mac_addr();
 
 }

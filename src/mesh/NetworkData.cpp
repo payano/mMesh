@@ -26,10 +26,6 @@ SOFTWARE.
 #include "SyscallsInterface.h"
 namespace mesh {
 
-NetworkData::NetworkData() {
-
-}
-
 NetworkData::NetworkData(syscalls::SyscallsInterface *syscalls) {
 	this->syscalls = syscalls;
 	mem_clr(&mac, sizeof(mac));
