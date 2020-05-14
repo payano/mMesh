@@ -22,17 +22,62 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-#pragma once
-#include <stdarg.h>     /* va_list, va_start, va_arg, va_end */
+#include <debug/LinuxDebug.h>
 
 namespace debugger {
+#include <stdio.h>
+#include <string.h>
 
-class DebugInterface {
-public:
-	virtual void error(const char *fmt, ...) = 0;
-	virtual void warn(const char *fmt, ...) = 0;
-	virtual void info(const char *fmt, ...) = 0;
-	virtual ~DebugInterface(){}
+LinuxDebug::LinuxDebug() {
+	// TODO Auto-generated constructor stub
 
-};
 }
+
+LinuxDebug::~LinuxDebug() {
+	// TODO Auto-generated destructor stub
+}
+
+void LinuxDebug::error(const char *fmt, ...)
+{
+	char buffer[256];
+	char *buf_ptr = buffer;
+	memset(buffer, 0, 256);
+
+	strcpy(buffer, "ERROR: ");
+	buf_ptr += strlen(buffer);
+	va_list args;
+	va_start (args, fmt);
+	vsprintf (buf_ptr,fmt, args);
+	printf("%s\n", buffer);
+	va_end (args);
+}
+void LinuxDebug::warn(const char *fmt, ...)
+{
+	char buffer[256];
+	char *buf_ptr = buffer;
+	memset(buffer, 0, 256);
+
+	strcpy(buffer, "WARN: ");
+	buf_ptr += strlen(buffer);
+	va_list args;
+	va_start (args, fmt);
+	vsprintf (buf_ptr,fmt, args);
+	printf("%s\n", buffer);
+	va_end (args);
+}
+void LinuxDebug::info(const char *fmt, ...)
+{
+	char buffer[256];
+	char *buf_ptr = buffer;
+	memset(buffer, 0, 256);
+
+	strcpy(buffer, "INFO: ");
+	buf_ptr += strlen(buffer);
+	va_list args;
+	va_start (args, fmt);
+	vsprintf (buf_ptr,fmt, args);
+	printf("%s\n", buffer);
+	va_end (args);
+}
+
+} /* namespace debug */

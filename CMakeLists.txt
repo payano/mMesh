@@ -68,6 +68,12 @@ add_library(GPIO STATIC
 	src/GPIO/GPIOStm32f103.cpp
 )
 
+add_library(Debug STATIC
+	src/debug/LinuxDebug.cpp
+	src/debug/STM32Debug.cpp
+	src/debug/DebugSingleton.cpp
+)
+
 #target_include_directories(hello_library
 #    PUBLIC 
 #        ${PROJECT_SOURCE_DIR}/include
@@ -85,6 +91,7 @@ include_directories(
 "src/spi"
 "src/GPIO"
 "src/syscalls"
+"src/debug"
 )
 
 ############################################################

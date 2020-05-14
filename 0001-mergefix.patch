@@ -1,0 +1,922 @@
+From 9d71064437b0b679db75bcdfccb6494fdd9e1d04 Mon Sep 17 00:00:00 2001
+From: Johan Svensson <johan.f.svensson@ericsson.com>
+Date: Thu, 14 May 2020 18:10:32 +0200
+Subject: [PATCH] mergefix
+
+---
+ CMakeLists.txt               |   7 +
+ src/debug/Debug.h            | 263 -----------------------------------
+ src/debug/DebugInterface.h   |   6 +
+ src/debug/DebugSingleton.cpp |  52 +++++++
+ src/debug/DebugSingleton.h   |  44 ++++++
+ src/debug/LinuxDebug.cpp     |  83 +++++++++++
+ src/debug/LinuxDebug.h       |  41 ++++++
+ src/debug/STM32Debug.cpp     |  23 +++
+ src/debug/STM32Debug.h       | 237 +++++++++++++++++++++++++++++++
+ src/test/mesh/main.cpp       |   2 +-
+ test/mesh/CMakeLists.txt     |   2 +
+ test/mesh/main.cpp           |   5 +-
+ 12 files changed, 500 insertions(+), 265 deletions(-)
+ delete mode 100644 src/debug/Debug.h
+ create mode 100644 src/debug/DebugSingleton.cpp
+ create mode 100644 src/debug/DebugSingleton.h
+ create mode 100644 src/debug/LinuxDebug.cpp
+ create mode 100644 src/debug/LinuxDebug.h
+ create mode 100644 src/debug/STM32Debug.cpp
+ create mode 100644 src/debug/STM32Debug.h
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1bd2c2d..d1a959a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -68,6 +68,12 @@ add_library(GPIO STATIC
+ 	src/GPIO/GPIOStm32f103.cpp
+ )
+ 
++add_library(Debug STATIC
++	src/debug/LinuxDebug.cpp
++	src/debug/STM32Debug.cpp
++	src/debug/DebugSingleton.cpp
++)
++
+ #target_include_directories(hello_library
+ #    PUBLIC 
+ #        ${PROJECT_SOURCE_DIR}/include
+@@ -85,6 +91,7 @@ include_directories(
+ "src/spi"
+ "src/GPIO"
+ "src/syscalls"
++"src/debug"
+ )
+ 
+ ############################################################
+diff --git a/src/debug/Debug.h b/src/debug/Debug.h
+deleted file mode 100644
+index 42d320e..0000000
+--- a/src/debug/Debug.h
++++ /dev/null
+@@ -1,263 +0,0 @@
+-/*
+-MIT License
+-
+-Copyright (c) 2020 Johan Svensson
+-
+-Permission is hereby granted, free of charge, to any person obtaining a copy
+-of this software and associated documentation files (the "Software"), to deal
+-in the Software without restriction, including without limitation the rights
+-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-copies of the Software, and to permit persons to whom the Software is
+-furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included in all
+-copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-SOFTWARE.
+- */
+-
+-#pragma once
+-
+-/* DEBUG LEVEL = DEBUG, ERROR, INFO */
+-#define DEBUG_LEVEL DEBUG
+-
+-#include "main.h"
+-#include "DebugInterface.h"
+-#include "DataTypes.h"
+-
+-
+-namespace debugger {
+-
+-class Debug : public DebugInterface {
+-private:
+-	UART_HandleTypeDef *huart;
+-public:
+-#ifndef UNIX
+-	Debug(UART_HandleTypeDef *uart)
+-	{
+-		huart = uart;
+-	}
+-
+-
+-#if DEBUG_LEVEL	== DEBUG
+-	template<typename T, typename ... Args>
+-	void debug(const char *fmt, T first, Args ... args) {
+-		char final_string[100];
+-		syscalls::SyscallsInterface::mem_clr(final_string, 100);
+-		char *prefix = (char *)"DEBUG: ";
+-		char *suffix = (char *)"\n\r";
+-
+-		/* Add prefix */
+-		int prefix_sz = syscalls::SyscallsInterface::string_len(prefix);
+-		char *final_ptr = final_string + prefix_sz;
+-		syscalls::SyscallsInterface::copy_data(final_string, prefix, prefix_sz);
+-
+-		log(final_ptr, fmt, first, args ...);
+-
+-		/* Add suffix */
+-		int suffix_sz = syscalls::SyscallsInterface::string_len(suffix);
+-		char *last_pos = final_string;
+-		last_pos += syscalls::SyscallsInterface::string_len(final_string);
+-		syscalls::SyscallsInterface::copy_data(last_pos, suffix, suffix_sz);
+-
+-		HAL_UART_Transmit(huart, (uint8_t*)final_string, syscalls::SyscallsInterface::string_len(final_string), 100);
+-	}
+-#endif
+-#if DEBUG_LEVEL == DEBUG || DEBUG_LEVEL == WARN
+-	template<typename T, typename ... Args>
+-	void warn(char *fmt, T first, Args ... args) {
+-		char final_string[100];
+-		syscalls::SyscallsInterface::mem_clr(final_string, 100);
+-		char *prefix = (char *)"WARN: ";
+-		char *suffix = (char *)"\n\r";
+-
+-		/* Add prefix */
+-		int prefix_sz = syscalls::SyscallsInterface::string_len(prefix);
+-		char *final_ptr = final_string + prefix_sz;
+-		syscalls::SyscallsInterface::copy_data(final_string, prefix, prefix_sz);
+-
+-		log(final_ptr, fmt, first, args ...);
+-
+-		/* Add suffix */
+-		int suffix_sz = syscalls::SyscallsInterface::string_len(suffix);
+-		char *last_pos = final_string;
+-		last_pos += syscalls::SyscallsInterface::string_len(final_string);
+-		syscalls::SyscallsInterface::copy_data(last_pos, suffix, suffix_sz);
+-
+-		HAL_UART_Transmit(huart, (uint8_t*)final_string, syscalls::SyscallsInterface::string_len(final_string), 100);
+-	}
+-#endif
+-
+-#if DEBUG_LEVEL == DEBUG || DEBUG_LEVEL == WARN || DEBUG_LEVEL == INFO
+-	template<typename T, typename ... Args>
+-	void info(char *fmt, T first, Args ... args) {
+-		char final_string[100];
+-		syscalls::SyscallsInterface::mem_clr(final_string, 100);
+-		char *prefix = (char *)"INFO: ";
+-		char *suffix = (char *)"\n\r";
+-
+-		/* Add prefix */
+-		int prefix_sz = syscalls::SyscallsInterface::string_len(prefix);
+-		char *final_ptr = final_string + prefix_sz;
+-		syscalls::SyscallsInterface::copy_data(final_string, prefix, prefix_sz);
+-
+-		log(final_ptr, fmt, first, args ...);
+-
+-		/* Add suffix */
+-		int suffix_sz = syscalls::SyscallsInterface::string_len(suffix);
+-		char *last_pos = final_string;
+-		last_pos += syscalls::SyscallsInterface::string_len(final_string);
+-		syscalls::SyscallsInterface::copy_data(last_pos, suffix, suffix_sz);
+-
+-		HAL_UART_Transmit(huart, (uint8_t*)final_string, syscalls::SyscallsInterface::string_len(final_string), 100);
+-	}
+-#endif
+-
+-private:
+-	template<typename T, typename ... Args>
+-	static void log(char *final_string, const char *fmt, T first, Args ... args) {
+-		while(*fmt != '%' && *fmt != 0) {
+-			*final_string = *fmt;
+-			++final_string;
+-			++fmt;
+-		}
+-		if(0 == *fmt) return;
+-
+-		char datatype[4];
+-		syscalls::SyscallsInterface::mem_clr(datatype, 4);
+-		char *data_ptr = datatype;
+-
+-		++fmt;
+-		//	while(*fmt != ' ' && *fmt != 0) {
+-		while(*fmt >= 48) {
+-			*data_ptr = *fmt;
+-			++fmt;
+-			++data_ptr;
+-		}
+-
+-		if(0 == syscalls::SyscallsInterface::cmp_data(datatype, "u32", 3)){
+-			/* signed 32 bit */
+-			int32_t value;
+-
+-			syscalls::SyscallsInterface::copy_data(&value, (int32_t*)&first, sizeof(int32_t));
+-			int ff = int_to_ascii(value, final_string, 10, false);
+-			final_string += ff;
+-
+-		} else if(0 == syscalls::SyscallsInterface::cmp_data(datatype, "s32", 3)) {
+-			/* unsigned 32 bit */
+-			uint32_t value;
+-
+-			syscalls::SyscallsInterface::copy_data(&value, (uint32_t*)&first, sizeof(uint32_t));
+-			int ff = int_to_ascii(value, final_string, 10, true);
+-			final_string += ff;
+-
+-		} else if(0 == syscalls::SyscallsInterface::cmp_data(datatype, "s", 1)) {
+-			/* string */
+-			const char *data_str = (const char*)first;
+-			int sz = syscalls::SyscallsInterface::string_len(data_str);
+-			for(int i = 0; i < sz; ++i){
+-				*final_string = *data_str;
+-				++final_string;
+-				++data_str;
+-			}
+-		}
+-
+-		// Forward the remaining arguments
+-		log(final_string, fmt, args ...);
+-
+-		/* print last bytes aswell*/
+-	}
+-
+-	__attribute__((unused))
+-	static int int_to_ascii(uint32_t value, char *buffer, int base, bool signedval)
+-	{
+-		/* if zero just return zero */
+-		if(0 == value) {
+-			*buffer = '0';
+-			++buffer;
+-			return 0;
+-		}
+-
+-		char rev_val[10];
+-		syscalls::SyscallsInterface::mem_clr(rev_val, 10);
+-		char *data_ptr = rev_val;
+-		int val;
+-		int count = 0;
+-		bool negative = false;
+-
+-		if(signedval) {
+-			int32_t sval;
+-			syscalls::SyscallsInterface::copy_data((uint32_t*)&sval, &value, sizeof(value));
+-			if(sval < 0) {
+-				negative = true;
+-				sval *= -1;
+-				value = sval;
+-			}
+-		}
+-
+-		/* We need to know signedness if we want to express negative values */
+-		while(value > 0) {
+-			val = value % base;
+-			val += val < 10 ? 48 : 48+7 ; /* get ascii of the value.*/
+-			*data_ptr = val;
+-			value /= base;
+-			++data_ptr;
+-			++count;
+-		}
+-
+-		if(negative) {
+-			*buffer = '-';
+-			++buffer;
+-		}
+-
+-		// reverse the itoa
+-		char *int_iterator = &rev_val[count-1];
+-		while(int_iterator != rev_val) {
+-			*buffer = *int_iterator;
+-			--int_iterator;
+-			++buffer;
+-		}
+-
+-		/* take last as well */
+-		*buffer = *int_iterator;
+-		++buffer;
+-		if(negative)
+-			++count;
+-
+-		return count;
+-	}
+-	/*
+-	https://thispointer.com/c11-variadic-template-function-tutorial-examples/
+-	*/
+-	// Function that accepts no parameter
+-	// It is to break the recursion chain of vardiac template function
+-	__attribute__((unused))
+-	static void log(char *final_string,  const char *fmt)
+-	{
+-		while(*final_string != 0) {
+-			++final_string;
+-		}
+-
+-		while(*fmt != 0) {
+-			*final_string = *fmt;
+-			++final_string;
+-			++fmt;
+-		}
+-	}
+-#else
+-	void log_debug(char *fmt, T first, Args ... args) {
+-		(void) fmt;
+-		(void) first;
+-		(void) args;
+-	}
+-
+-#endif
+-
+-};
+-}
+diff --git a/src/debug/DebugInterface.h b/src/debug/DebugInterface.h
+index 0169f27..aca0adf 100644
+--- a/src/debug/DebugInterface.h
++++ b/src/debug/DebugInterface.h
+@@ -23,10 +23,16 @@ SOFTWARE.
+  */
+ 
+ #pragma once
++#include <stdarg.h>     /* va_list, va_start, va_arg, va_end */
+ 
+ namespace debugger {
+ 
+ class DebugInterface {
+ public:
++	virtual void error(const char *fmt, ...) = 0;
++	virtual void warn(const char *fmt, ...) = 0;
++	virtual void info(const char *fmt, ...) = 0;
++	virtual ~DebugInterface(){}
++
+ };
+ }
+diff --git a/src/debug/DebugSingleton.cpp b/src/debug/DebugSingleton.cpp
+new file mode 100644
+index 0000000..33392e0
+--- /dev/null
++++ b/src/debug/DebugSingleton.cpp
+@@ -0,0 +1,52 @@
++/*
++MIT License
++
++Copyright (c) 2020 Johan Svensson
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
++ */
++
++#include "DebugSingleton.h"
++#include "DebugInterface.h"
++#include "LinuxDebug.h"
++#include "STM32Debug.h"
++
++namespace debugger {
++DebugInterface *DebugSingleton::debugger = nullptr;
++
++void DebugSingleton::createLinuxInstance()
++{
++	if(DebugSingleton::debugger != nullptr) return;
++	DebugSingleton::debugger = new LinuxDebug();
++}
++
++void DebugSingleton::createSTM32Instance(UART_HandleTypeDef *huart1)
++{
++	if(DebugSingleton::debugger != nullptr) return;
++	DebugSingleton::debugger = new STM32Debug(huart1);
++}
++
++
++//
++//DebugInterface *getInstance()
++//{
++//	return DebugSingleton::debugger;
++//}
++
++}
+diff --git a/src/debug/DebugSingleton.h b/src/debug/DebugSingleton.h
+new file mode 100644
+index 0000000..14a8882
+--- /dev/null
++++ b/src/debug/DebugSingleton.h
+@@ -0,0 +1,44 @@
++/*
++MIT License
++
++Copyright (c) 2020 Johan Svensson
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
++ */
++
++#pragma once
++#include "LinuxDebug.h"
++
++namespace debugger {
++class UART_HandleTypeDef;
++class DebugInterface;
++
++class DebugSingleton {
++private:
++	static DebugInterface *debugger;
++	DebugSingleton();
++public:
++	static void createLinuxInstance();
++	static void createSTM32Instance(UART_HandleTypeDef *huart1);
++
++	static DebugInterface *getInstance(){ return debugger;}
++};
++
++
++}
+diff --git a/src/debug/LinuxDebug.cpp b/src/debug/LinuxDebug.cpp
+new file mode 100644
+index 0000000..f60d11f
+--- /dev/null
++++ b/src/debug/LinuxDebug.cpp
+@@ -0,0 +1,83 @@
++/*
++MIT License
++
++Copyright (c) 2020 Johan Svensson
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
++ */
++
++#include <debug/LinuxDebug.h>
++
++namespace debugger {
++#include <stdio.h>
++#include <string.h>
++
++LinuxDebug::LinuxDebug() {
++	// TODO Auto-generated constructor stub
++
++}
++
++LinuxDebug::~LinuxDebug() {
++	// TODO Auto-generated destructor stub
++}
++
++void LinuxDebug::error(const char *fmt, ...)
++{
++	char buffer[256];
++	char *buf_ptr = buffer;
++	memset(buffer, 0, 256);
++
++	strcpy(buffer, "ERROR: ");
++	buf_ptr += strlen(buffer);
++	va_list args;
++	va_start (args, fmt);
++	vsprintf (buf_ptr,fmt, args);
++	printf("%s\n", buffer);
++	va_end (args);
++}
++void LinuxDebug::warn(const char *fmt, ...)
++{
++	char buffer[256];
++	char *buf_ptr = buffer;
++	memset(buffer, 0, 256);
++
++	strcpy(buffer, "WARN: ");
++	buf_ptr += strlen(buffer);
++	va_list args;
++	va_start (args, fmt);
++	vsprintf (buf_ptr,fmt, args);
++	printf("%s\n", buffer);
++	va_end (args);
++}
++void LinuxDebug::info(const char *fmt, ...)
++{
++	char buffer[256];
++	char *buf_ptr = buffer;
++	memset(buffer, 0, 256);
++
++	strcpy(buffer, "INFO: ");
++	buf_ptr += strlen(buffer);
++	va_list args;
++	va_start (args, fmt);
++	vsprintf (buf_ptr,fmt, args);
++	printf("%s\n", buffer);
++	va_end (args);
++}
++
++} /* namespace debug */
+diff --git a/src/debug/LinuxDebug.h b/src/debug/LinuxDebug.h
+new file mode 100644
+index 0000000..4e2e77a
+--- /dev/null
++++ b/src/debug/LinuxDebug.h
+@@ -0,0 +1,41 @@
++/*
++MIT License
++
++Copyright (c) 2020 Johan Svensson
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
++ */
++
++#pragma once
++#include "DebugInterface.h"
++namespace debugger {
++
++class LinuxDebug : public DebugInterface {
++public:
++	LinuxDebug();
++	virtual ~LinuxDebug();
++
++	void error(const char *fmt, ...) override;
++	void warn(const char *fmt, ...) override;
++	void info(const char *fmt, ...) override;
++
++};
++
++} /* namespace debug */
++
+diff --git a/src/debug/STM32Debug.cpp b/src/debug/STM32Debug.cpp
+new file mode 100644
+index 0000000..674421b
+--- /dev/null
++++ b/src/debug/STM32Debug.cpp
+@@ -0,0 +1,23 @@
++/*
++MIT License
++
++Copyright (c) 2020 Johan Svensson
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
++ */
+diff --git a/src/debug/STM32Debug.h b/src/debug/STM32Debug.h
+new file mode 100644
+index 0000000..a0df2b9
+--- /dev/null
++++ b/src/debug/STM32Debug.h
+@@ -0,0 +1,237 @@
++/*
++MIT License
++
++Copyright (c) 2020 Johan Svensson
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
++ */
++
++#pragma once
++
++
++/* DEBUG LEVEL = DEBUG, ERROR, INFO */
++#define DEBUG_LEVEL DEBUG
++
++#ifndef UNIX
++#include "main.h"
++#endif
++
++#include "DebugInterface.h"
++#include "DataTypes.h"
++#include <stdarg.h>
++#include "SyscallsInterface.h"
++
++
++namespace debugger {
++enum DATA_TYPE {
++	DATA_TYPE_UNDEFINED = 0,
++	DATA_TYPE_STRING,
++	DATA_TYPE_SIGNED_INT,
++	DATA_TYPE_UNSIGNED_INT,
++	DATA_TYPE_HEX,
++};
++
++class STM32Debug : public DebugInterface {
++private:
++#ifndef UNIX
++	UART_HandleTypeDef *huart;
++#endif
++public:
++#ifndef UNIX
++	STM32Debug(UART_HandleTypeDef *uart){
++		huart = uart;
++	}
++#else
++	STM32Debug(UART_HandleTypeDef *uart){
++		(void)uart;
++	}
++#endif
++
++private:
++	int get_argument(const char **arg)
++	{
++		const char *val = (const char*)*arg;
++		++val;
++		enum DATA_TYPE type = DATA_TYPE_UNDEFINED;
++
++		switch(*val){
++		case 's':
++			type =  DATA_TYPE_STRING;
++			break;
++		case 'd':
++			type = DATA_TYPE_SIGNED_INT;
++			break;
++		case 'u':
++			type = DATA_TYPE_UNSIGNED_INT;
++			break;
++		case 'x':
++			type = DATA_TYPE_HEX;
++			break;
++
++		}
++
++		++val;
++		*arg = val;
++		return type;
++	}
++
++	void add_int(char **buf_ptr, uint32_t value, int base, int signedval)
++	{
++		char *buffer = *buf_ptr;
++		/* if zero just return zero */
++		if(0 == value) {
++			*buffer = '0';
++			++buffer;
++			return;
++		}
++
++		char rev_val[10];
++		syscalls::SyscallsInterface::mem_clr(rev_val, 10);
++
++		char *data_ptr = rev_val;
++		int val;
++		int count = 0;
++		int negative = 0;
++
++		if(signedval) {
++			int32_t sval;
++			syscalls::SyscallsInterface::copy_data((uint32_t*)&sval, &value, sizeof(value));
++			if(sval < 0) {
++				negative = 1;
++				sval *= -1;
++				value = sval;
++			}
++		}
++
++		/* We need to know signedness if we want to express negative values */
++		while(value > 0) {
++			val = value % base;
++			val += val < 10 ? 48 : 48+7 ; /* get ascii of the value.*/
++			*data_ptr = val;
++			value /= base;
++			++data_ptr;
++			++count;
++		}
++
++		if(negative) {
++			*buffer = '-';
++			++buffer;
++		}
++
++		// reverse the itoa
++		char *int_iterator = &rev_val[count-1];
++		while(int_iterator != rev_val) {
++			*buffer = *int_iterator;
++			--int_iterator;
++			++buffer;
++		}
++
++		/* take last as well */
++		*buffer = *int_iterator;
++		++buffer;
++		if(negative)
++			++count;
++
++		*buf_ptr = buffer;
++
++	}
++
++	void add_string(char **buffer, const char *string)
++	{
++		char *buf_ptr = *buffer;
++		int len = syscalls::SyscallsInterface::string_len(string);
++
++		syscalls::SyscallsInterface::copy_data(buf_ptr, string, len);
++		*buffer = buf_ptr;
++		buf_ptr += len;
++		*buffer = buf_ptr;
++	}
++
++	void logger(char* buffer_ptr, const char *fmt, va_list *arguments)
++	{
++		int ret = 0;
++		while(*fmt != 0){
++			if(*fmt == '%') {
++				ret = get_argument(&fmt);
++				switch(ret) {
++				case DATA_TYPE_STRING:
++					add_string(&buffer_ptr, va_arg(*arguments,char *));
++					continue;
++					break;
++
++				case DATA_TYPE_SIGNED_INT:
++				case DATA_TYPE_UNSIGNED_INT:
++					add_int(&buffer_ptr, va_arg(*arguments, unsigned int), 10, 1);
++					continue;
++					break;
++				case DATA_TYPE_HEX:
++					add_int(&buffer_ptr, va_arg(*arguments, unsigned int), 16, 0);
++					continue;
++					break;
++				default:
++					return;
++
++				}
++			}
++			*buffer_ptr = *fmt;
++			++buffer_ptr;
++			++fmt;
++		}
++	}
++
++public:
++
++	void error(const char *fmt, ...) override {
++		char buffer[100];
++		char *buf_ptr = buffer;
++		syscalls::SyscallsInterface::mem_clr(buffer, 100);
++		const char *prefix = "ERROR: ";
++		const char *suffix = "\n\r";
++		int sz = syscalls::SyscallsInterface::string_len(prefix);
++		syscalls::SyscallsInterface::copy_data(buf_ptr, prefix, sz);
++		buf_ptr += sz;
++
++		va_list args;
++		va_start(args, fmt);
++		logger(buf_ptr, fmt, &args);
++		va_end(args);
++
++		buf_ptr = buffer;
++		sz = syscalls::SyscallsInterface::string_len(buffer);
++		buf_ptr += sz;
++		sz = syscalls::SyscallsInterface::string_len(suffix);
++		syscalls::SyscallsInterface::copy_data(buf_ptr, suffix, sz);
++
++		sz = syscalls::SyscallsInterface::string_len(buffer);
++#ifndef UNIX
++		HAL_UART_Transmit(huart, (uint8_t*)buffer, syscalls::SyscallsInterface::string_len(buffer), 100);
++#endif
++
++	}
++
++	void warn(const char *fmt, ...) override {
++		(void)fmt;
++	}
++	void info(const char *fmt, ...) override {
++		(void)fmt;
++	}
++
++
++};
++}
+diff --git a/src/test/mesh/main.cpp b/src/test/mesh/main.cpp
+index e1afc56..1f323a2 100644
+--- a/src/test/mesh/main.cpp
++++ b/src/test/mesh/main.cpp
+@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
+ #ifdef UNIX
++#include "DebugInterface.h"
+ #include "gtest/gtest.h"
+ #include "NodeTest.h"
+ #include "LazyAlgorithmTest.h"
+@@ -31,7 +32,6 @@ SOFTWARE.
+ 
+ int main(int argc, char **argv) {
+ 	srand (time(0));
+-
+ 	::testing::InitGoogleTest(&argc, argv);
+ 	return RUN_ALL_TESTS();
+ }
+diff --git a/test/mesh/CMakeLists.txt b/test/mesh/CMakeLists.txt
+index 28c8a1c..70eca13 100644
+--- a/test/mesh/CMakeLists.txt
++++ b/test/mesh/CMakeLists.txt
+@@ -11,6 +11,7 @@ TARGET_LINK_LIBRARIES(meshTests
+     GPIO
+     Spi
+     Syscalls
++    Debug
+     libgtest
+     libgmock
+ )
+@@ -26,6 +27,7 @@ include_directories(
+ "../../src/GPIO"
+ "../../src/syscalls"
+ "../../src/spi"
++"../../src/debug"
+ )
+ 
+ add_test(NAME meshTests
+diff --git a/test/mesh/main.cpp b/test/mesh/main.cpp
+index f6c932e..16bb396 100644
+--- a/test/mesh/main.cpp
++++ b/test/mesh/main.cpp
+@@ -28,12 +28,15 @@ SOFTWARE.
+ #include "LazyAlgorithmTest.h"
+ #include "NRF24Test.h"
+ #include "NodeTest.h"
++#include "DebugInterface.h"
++#include "DebugSingleton.h"
+ 
+ // Look in nodetest.h
+ 
+ int main(int argc, char **argv) {
+ 	srand (time(0));
+-
++	debugger::DebugSingleton::createLinuxInstance();
++	debugger::DebugSingleton::getInstance()->error("TEST: %s", "error");
+ 	::testing::InitGoogleTest(&argc, argv);
+ 	return RUN_ALL_TESTS();
+ }
+-- 
+2.17.1
+

@@ -11,6 +11,7 @@ TARGET_LINK_LIBRARIES(meshTests
     GPIO
     Spi
     Syscalls
+    Debug
     libgtest
     libgmock
 )
@@ -26,6 +27,7 @@ include_directories(
 "../../src/GPIO"
 "../../src/syscalls"
 "../../src/spi"
+"../../src/debug"
 )
 
 add_test(NAME meshTests

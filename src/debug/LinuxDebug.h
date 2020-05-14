@@ -20,25 +20,22 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-*/
+ */
 
-#ifdef UNIX
-#include "gtest/gtest.h"
-#include "SyscallsTest.h"
-#include "LazyAlgorithmTest.h"
-#include "NRF24Test.h"
-#include "NodeTest.h"
+#pragma once
 #include "DebugInterface.h"
-#include "DebugSingleton.h"
+namespace debugger {
 
-// Look in nodetest.h
+class LinuxDebug : public DebugInterface {
+public:
+	LinuxDebug();
+	virtual ~LinuxDebug();
 
-int main(int argc, char **argv) {
-	srand (time(0));
-	debugger::DebugSingleton::createLinuxInstance();
-	debugger::DebugSingleton::getInstance()->error("TEST: %s", "error");
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
-}
+	void error(const char *fmt, ...) override;
+	void warn(const char *fmt, ...) override;
+	void info(const char *fmt, ...) override;
 
-#endif
+};
+
+} /* namespace debug */
+
