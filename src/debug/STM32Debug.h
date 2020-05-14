@@ -54,11 +54,11 @@ private:
 #endif
 public:
 #ifndef UNIX
-	STM32Debug(UART_HandleTypeDef *uart){
-		huart = uart;
+	STM32Debug(void *uart){
+		huart = static_cast<UART_HandleTypeDef*>(uart);
 	}
 #else
-	STM32Debug(UART_HandleTypeDef *uart){
+	STM32Debug(void *uart){
 		(void)uart;
 	}
 #endif

@@ -26,7 +26,6 @@ SOFTWARE.
 #include "LinuxDebug.h"
 
 namespace debugger {
-class UART_HandleTypeDef;
 class DebugInterface;
 
 class DebugSingleton {
@@ -35,7 +34,7 @@ private:
 	DebugSingleton();
 public:
 	static void createLinuxInstance();
-	static void createSTM32Instance(UART_HandleTypeDef *huart1);
+	static void createSTM32Instance(void *huart1);
 
 	static DebugInterface *getInstance(){ return debugger;}
 };

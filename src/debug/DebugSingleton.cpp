@@ -36,7 +36,7 @@ void DebugSingleton::createLinuxInstance()
 	DebugSingleton::debugger = new LinuxDebug();
 }
 
-void DebugSingleton::createSTM32Instance(UART_HandleTypeDef *huart1)
+void DebugSingleton::createSTM32Instance(void *huart1)
 {
 	if(DebugSingleton::debugger != nullptr) return;
 	DebugSingleton::debugger = new STM32Debug(huart1);
