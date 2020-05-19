@@ -21,12 +21,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
+#ifdef UNIX
 
 #include <debug/LinuxDebug.h>
-
-namespace debugger {
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
+
+namespace debugger {
 
 LinuxDebug::LinuxDebug() {
 	// TODO Auto-generated constructor stub
@@ -48,7 +50,7 @@ void LinuxDebug::error(const char *fmt, ...)
 	va_list args;
 	va_start (args, fmt);
 	vsprintf (buf_ptr,fmt, args);
-	printf("%s\n", buffer);
+//	printf("%s\n", buffer);
 	va_end (args);
 }
 void LinuxDebug::warn(const char *fmt, ...)
@@ -62,7 +64,7 @@ void LinuxDebug::warn(const char *fmt, ...)
 	va_list args;
 	va_start (args, fmt);
 	vsprintf (buf_ptr,fmt, args);
-	printf("%s\n", buffer);
+//	printf("%s\n", buffer);
 	va_end (args);
 }
 void LinuxDebug::info(const char *fmt, ...)
@@ -76,8 +78,24 @@ void LinuxDebug::info(const char *fmt, ...)
 	va_list args;
 	va_start (args, fmt);
 	vsprintf (buf_ptr,fmt, args);
-	printf("%s\n", buffer);
+//	printf("%s\n", buffer);
+	va_end (args);
+}
+void LinuxDebug::debug(const char *fmt, ...)
+{
+	char buffer[256];
+	char *buf_ptr = buffer;
+	memset(buffer, 0, 256);
+
+	strcpy(buffer, "DEBUG: ");
+	buf_ptr += strlen(buffer);
+	va_list args;
+	va_start (args, fmt);
+	vsprintf (buf_ptr,fmt, args);
+//	printf("%s\n", buffer);
 	va_end (args);
 }
 
 } /* namespace debug */
+
+#endif

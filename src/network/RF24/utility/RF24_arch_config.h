@@ -11,15 +11,15 @@
 
 #define RF24_LINUX
 
-#include <stddef.h>
+//#include <stddef.h>
 //#include "spi.h"
 //#include "gpio.h"
 //#include "compatibility.h"
 #include <stdint.h>
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-#include <sys/time.h>
+//#include <stdio.h>
+//#include <time.h>
+//#include <string.h>
+//#include <sys/time.h>
 
 #define RF24_SPI_SPEED RF24_SPIDEV_SPEED
 
@@ -34,18 +34,18 @@
 #endif
 
 // Avoid spurious warnings
-#if 1
-    #if !defined( NATIVE ) && defined( ARDUINO )
-        #undef PROGMEM
-        #define PROGMEM __attribute__(( section(".progmem.data") ))
-        #undef PSTR
-        #define PSTR(s) (__extension__({static const char __c[] PROGMEM = (s); &__c[0];}))
-    #endif
-#endif
+//#if 1
+//    #if !defined( NATIVE ) && defined( ARDUINO )
+//        #undef PROGMEM
+//        #define PROGMEM __attribute__(( section(".progmem.data") ))
+//        #undef PSTR
+//        #define PSTR(s) (__extension__({static const char __c[] PROGMEM = (s); &__c[0];}))
+//    #endif
+//#endif
 
 typedef uint16_t prog_uint16_t;
 #define PSTR(x) (x)
-#define printf_P printf
+//#define printf_P printf
 #define strlen_P strlen
 #define PROGMEM
 #define pgm_read_word(p) (*(p))

@@ -29,7 +29,11 @@ SOFTWARE.
 #include "MeshMessagePublisher.h"
 #include <stdint.h>
 #include "Constants.h"
-//#include <thread>         // std::thread
+
+namespace debugger {
+class DebugInterface;
+class DebugSingleton;
+}
 
 namespace syscalls {
 class SyscallsInterface;
@@ -67,6 +71,7 @@ private:
 	char name[MAX_NAME];
 	uint8_t childs[CHILD_COUNT];
 	bool mSetMaster;
+	debugger::DebugInterface *debugger;
 
 	/* State machine */
 	struct stateData *statedata;

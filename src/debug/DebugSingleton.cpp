@@ -23,7 +23,6 @@ SOFTWARE.
  */
 
 #include "DebugSingleton.h"
-#include "DebugInterface.h"
 #include "LinuxDebug.h"
 #include "STM32Debug.h"
 
@@ -32,14 +31,20 @@ DebugInterface *DebugSingleton::debugger = nullptr;
 
 void DebugSingleton::createLinuxInstance()
 {
+#ifdef UNIX
 	if(DebugSingleton::debugger != nullptr) return;
 	DebugSingleton::debugger = new LinuxDebug();
+#endif
 }
 
-void DebugSingleton::createSTM32Instance(void *huart1)
+void DebugSingleton::createSTM32Instance(syscalls::SyscallsInterface *syscalls)
 {
+#ifndef UNIX
 	if(DebugSingleton::debugger != nullptr) return;
-	DebugSingleton::debugger = new STM32Debug(huart1);
+	DebugSingleton::debugger = new STM32Debug(syscalls);
+#else
+	(void)syscalls;
+#endif
 }
 
 

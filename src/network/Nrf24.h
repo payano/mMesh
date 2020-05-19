@@ -41,22 +41,32 @@ namespace network {
 class RF24;
 }
 
+namespace debugger {
+class DebugInterface;
+class DebugSingleton;
+}
+
 namespace network {
 
 class Nrf24 : public NetworkInterface {
 private:
 	bool isConnected;
 	RF24 *rf24;
+	debugger::DebugInterface *debugger;
+	syscalls::SyscallsInterface *syscall;
 protected:
 public:
-	Nrf24(gpio::GPIOInterface *gpio, syscalls::SyscallsInterface *syscall, spi::SPIInterface *spi);
+	Nrf24(syscalls::SyscallsInterface *syscall);
 	virtual ~Nrf24();
 	void setSPI(void *spi) override;
 	int init() override;
 	void deinit() override;
 	int start() override;
 	int sendto(const struct net_address *dest, union mesh_internal_msg *msg) override;
-	void recv_from(union mesh_internal_msg *msg) override;
+	void recv_from(uint8_t from, union mesh_internal_msg *msg) override;
+	void setAddr(const struct net_address *addr) override;
+	void irq() override;
+
 
 };
 

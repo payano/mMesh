@@ -142,7 +142,7 @@ void Island::sendMessage(const struct net_address *to_addr,
 		for(node::Node* member : sendMembers){
 			struct net_address addr;
 			member->nw->getAddr(&addr);
-			member->nw->recv_from(msg);
+			member->nw->recv_from(0, msg);
 
 		}
 	}
@@ -152,7 +152,7 @@ void Island::sendMessage(const struct net_address *to_addr,
 			struct net_address addr;
 			member->nw->getAddr(&addr);
 			if(!syscalls::SyscallsInterface::cmp_data(to_addr, &addr, sizeof(addr))) {
-				member->nw->recv_from(msg);
+				member->nw->recv_from(0, msg);
 			}
 		}
 		break;

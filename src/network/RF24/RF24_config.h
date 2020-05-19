@@ -46,120 +46,120 @@
     #include "utility/includes.h"
 
 //ATTiny    
-#elif defined (__AVR_ATtiny25__) || defined (__AVR_ATtiny45__) || defined (__AVR_ATtiny85__) || defined (__AVR_ATtiny24__) || defined (__AVR_ATtiny44__) || defined (__AVR_ATtiny84__) || defined (__AVR_ATtiny2313__) || defined (__AVR_ATtiny4313__) || defined (__AVR_ATtiny861__)    
-    #define RF24_TINY
-    #include "utility/ATTiny/RF24_arch_config.h"
-
-#elif defined (LITTLEWIRE) //LittleWire
-    #include "utility/LittleWire/RF24_arch_config.h"
-
-#elif defined (TEENSYDUINO) //Teensy
-    #include "utility/Teensy/RF24_arch_config.h"    
-
-#else //Everything else
-    #include <Arduino.h>
-    
-    // RF modules support 10 Mhz SPI bus speed
-    const uint32_t RF24_SPI_SPEED = 10000000;    
-
-    #if defined (ARDUINO) && !defined (__arm__) && !defined (__ARDUINO_X86__)
-        #if defined SPI_UART
-            #include <SPI_UART.h>
-            #define _SPI uspi
-        #elif defined (SOFTSPI)
-            // change these pins to your liking
-            //
-            #ifndef SOFT_SPI_MISO_PIN
-                #define SOFT_SPI_MISO_PIN 9
-            #endif // SOFT_SPI_MISO_PIN
-
-            #ifndef SOFT_SPI_MOSI_PIN
-                #define SOFT_SPI_MOSI_PIN 8
-            #endif // SOFT_SPI_MOSI_PIN
-
-            #ifndef SOFT_SPI_SCK_PIN
-                #define SOFT_SPI_SCK_PIN 7
-            #endif // SOFT_SPI_SCK_PIN
-
-            const uint8_t SPI_MODE = 0;
-            #define _SPI spi
-    
-        #else // !defined (SPI_UART) && !defined (SOFTSPI)
-            #include <SPI.h>
-            #define _SPI SPI
-        #endif // !defined (SPI_UART) && !defined (SOFTSPI)
-
-    #else // defined (ARDUINO) && !defined (__arm__) && !defined (__ARDUINO_X86__)
-        // Define _BV for non-Arduino platforms and for Arduino DUE
-        #include <stdint.h>
-        #include <stdio.h>
-        #include <string.h>
-
-        #if defined(__arm__) || defined (__ARDUINO_X86__)
-            #if defined (__arm__) && defined (SPI_UART)
-                #include <SPI_UART.h>
-                #define _SPI uspi
-
-            #else // !defined (__arm__) || !defined (SPI_UART)
-                #include <SPI.h>
-                #define _SPI SPI
-
-            #endif // !defined (__arm__) || !defined (SPI_UART)
-        #elif !defined(__arm__) && !defined (__ARDUINO_X86__)
-            extern HardwareSPI SPI;
-
-        #endif // !defined(__arm__) && !defined (__ARDUINO_X86__)
- 
-        #define _BV(x) (1<<(x))
-    #endif // defined (ARDUINO) && !defined (__arm__) && !defined (__ARDUINO_X86__)
-
-    #ifdef SERIAL_DEBUG
-        #define IF_SERIAL_DEBUG(x) ({x;})
-    #else
-        #define IF_SERIAL_DEBUG(x)
-        #if defined(RF24_TINY)
-            #define printf_P(...)
-
-        #endif // defined(RF24_TINY)
-    #endif // SERIAL_DEBUG
-    
-    #if defined (__ARDUINO_X86__)
-        #define printf_P printf
-        #define _BV(bit) (1<<(bit))
-
-    #endif // defined (__ARDUINO_X86__)
-    
-    // Progmem is Arduino-specific
-    // Arduino DUE is arm and does not include avr/pgmspace
-    #if defined (ARDUINO_ARCH_ESP8266)
-        #include <pgmspace.h>
-        #define PRIPSTR "%s"
-    #elif defined (ESP32)
-        #include <pgmspace.h>
-        #define PRIPSTR "%s"
-        #define pgm_read_ptr(p) (*(p))
-    #elif defined (ARDUINO) && !defined (ESP_PLATFORM) && ! defined (__arm__) && !defined (__ARDUINO_X86__) || defined (XMEGA)
-        #include <avr/pgmspace.h>
-        #define PRIPSTR "%S"
-
-    #else // !defined (ARDUINO) || defined (ESP_PLATFORM) || defined (__arm__) || defined (__ARDUINO_X86__) && !defined (XMEGA)
-        #if !defined (ARDUINO) // This doesn't work on Arduino DUE
-            typedef char const char;
-
-        #else // Fill in pgm_read_byte that is used, but missing from DUE
-            #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
-        #endif // !defined (ARDUINO)
-
-        typedef uint16_t prog_uint16_t;
-        #define PSTR(x) (x)
-        #define printf_P printf
-        #define strlen_P strlen
-        #define PROGMEM
-        #define pgm_read_word(p) (*(p))
-        #define pgm_read_ptr(p) (*(p))
-        #define PRIPSTR "%s"
-
-    #endif // !defined (ARDUINO) || defined (ESP_PLATFORM) || defined (__arm__) || defined (__ARDUINO_X86__) && !defined (XMEGA)
+//#elif defined (__AVR_ATtiny25__) || defined (__AVR_ATtiny45__) || defined (__AVR_ATtiny85__) || defined (__AVR_ATtiny24__) || defined (__AVR_ATtiny44__) || defined (__AVR_ATtiny84__) || defined (__AVR_ATtiny2313__) || defined (__AVR_ATtiny4313__) || defined (__AVR_ATtiny861__)
+//    #define RF24_TINY
+//    #include "utility/ATTiny/RF24_arch_config.h"
+//
+//#elif defined (LITTLEWIRE) //LittleWire
+//    #include "utility/LittleWire/RF24_arch_config.h"
+//
+//#elif defined (TEENSYDUINO) //Teensy
+//    #include "utility/Teensy/RF24_arch_config.h"
+//
+//#else //Everything else
+//    #include <Arduino.h>
+//
+//    // RF modules support 10 Mhz SPI bus speed
+//    const uint32_t RF24_SPI_SPEED = 10000000;
+//
+//    #if defined (ARDUINO) && !defined (__arm__) && !defined (__ARDUINO_X86__)
+//        #if defined SPI_UART
+//            #include <SPI_UART.h>
+//            #define _SPI uspi
+//        #elif defined (SOFTSPI)
+//            // change these pins to your liking
+//            //
+//            #ifndef SOFT_SPI_MISO_PIN
+//                #define SOFT_SPI_MISO_PIN 9
+//            #endif // SOFT_SPI_MISO_PIN
+//
+//            #ifndef SOFT_SPI_MOSI_PIN
+//                #define SOFT_SPI_MOSI_PIN 8
+//            #endif // SOFT_SPI_MOSI_PIN
+//
+//            #ifndef SOFT_SPI_SCK_PIN
+//                #define SOFT_SPI_SCK_PIN 7
+//            #endif // SOFT_SPI_SCK_PIN
+//
+//            const uint8_t SPI_MODE = 0;
+//            #define _SPI spi
+//
+//        #else // !defined (SPI_UART) && !defined (SOFTSPI)
+//            #include <SPI.h>
+//            #define _SPI SPI
+//        #endif // !defined (SPI_UART) && !defined (SOFTSPI)
+//
+//    #else // defined (ARDUINO) && !defined (__arm__) && !defined (__ARDUINO_X86__)
+//        // Define _BV for non-Arduino platforms and for Arduino DUE
+//        #include <stdint.h>
+//        #include <stdio.h>
+//        #include <string.h>
+//
+//        #if defined(__arm__) || defined (__ARDUINO_X86__)
+//            #if defined (__arm__) && defined (SPI_UART)
+//                #include <SPI_UART.h>
+//                #define _SPI uspi
+//
+//            #else // !defined (__arm__) || !defined (SPI_UART)
+//                #include <SPI.h>
+//                #define _SPI SPI
+//
+//            #endif // !defined (__arm__) || !defined (SPI_UART)
+//        #elif !defined(__arm__) && !defined (__ARDUINO_X86__)
+//            extern HardwareSPI SPI;
+//
+//        #endif // !defined(__arm__) && !defined (__ARDUINO_X86__)
+//
+//        #define _BV(x) (1<<(x))
+//    #endif // defined (ARDUINO) && !defined (__arm__) && !defined (__ARDUINO_X86__)
+//
+//    #ifdef SERIAL_DEBUG
+//        #define IF_SERIAL_DEBUG(x) ({x;})
+//    #else
+//        #define IF_SERIAL_DEBUG(x)
+//        #if defined(RF24_TINY)
+//            #define printf_P(...)
+//
+//        #endif // defined(RF24_TINY)
+//    #endif // SERIAL_DEBUG
+//
+//    #if defined (__ARDUINO_X86__)
+//        #define printf_P printf
+//        #define _BV(bit) (1<<(bit))
+//
+//    #endif // defined (__ARDUINO_X86__)
+//
+//    // Progmem is Arduino-specific
+//    // Arduino DUE is arm and does not include avr/pgmspace
+//    #if defined (ARDUINO_ARCH_ESP8266)
+//        #include <pgmspace.h>
+//        #define PRIPSTR "%s"
+//    #elif defined (ESP32)
+//        #include <pgmspace.h>
+//        #define PRIPSTR "%s"
+//        #define pgm_read_ptr(p) (*(p))
+//    #elif defined (ARDUINO) && !defined (ESP_PLATFORM) && ! defined (__arm__) && !defined (__ARDUINO_X86__) || defined (XMEGA)
+//        #include <avr/pgmspace.h>
+//        #define PRIPSTR "%S"
+//
+//    #else // !defined (ARDUINO) || defined (ESP_PLATFORM) || defined (__arm__) || defined (__ARDUINO_X86__) && !defined (XMEGA)
+//        #if !defined (ARDUINO) // This doesn't work on Arduino DUE
+//            typedef char const char;
+//
+//        #else // Fill in pgm_read_byte that is used, but missing from DUE
+//            #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+//        #endif // !defined (ARDUINO)
+//
+//        typedef uint16_t prog_uint16_t;
+//        #define PSTR(x) (x)
+//        #define printf_P printf
+//        #define strlen_P strlen
+//        #define PROGMEM
+//        #define pgm_read_word(p) (*(p))
+//        #define pgm_read_ptr(p) (*(p))
+//        #define PRIPSTR "%s"
+//
+//    #endif // !defined (ARDUINO) || defined (ESP_PLATFORM) || defined (__arm__) || defined (__ARDUINO_X86__) && !defined (XMEGA)
 #endif //Everything else
 
 #endif // __RF24_CONFIG_H__

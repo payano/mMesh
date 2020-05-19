@@ -23,13 +23,13 @@ SOFTWARE.
  */
 
 #pragma once
-#include <stdarg.h>     /* va_list, va_start, va_arg, va_end */
 
 namespace debugger {
 
 class DebugInterface {
 public:
 	virtual void error(const char *fmt, ...) = 0;
+	virtual void debug(const char *fmt, ...) = 0;
 	virtual void warn(const char *fmt, ...) = 0;
 	virtual void info(const char *fmt, ...) = 0;
 	virtual ~DebugInterface(){}

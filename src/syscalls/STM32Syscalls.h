@@ -26,9 +26,6 @@ SOFTWARE.
 #ifndef UNIX
 
 #include "SyscallsInterface.h"
-#include "main.h"
-#include <stdint.h>
-#include "stm32f1xx_hal_tim.h"
 namespace syscalls {
 
 class STM32Syscalls : public SyscallsInterface {
@@ -36,15 +33,17 @@ private:
 	uint32_t cpu_speed;
 	uint16_t per;
 	uint16_t psc;
-	TIM_HandleTypeDef *htim1;
-	ADC_HandleTypeDef *hadc1;
+	struct gpio_pins *pins;
+	void *htim;
+	void *hadc;
+	void *hspi;
+	void *huart;
 
 	bool firstRun;
+	void gpio_read_pin(PINS *pin, void **gpio_port, uint16_t *gpio_pin);
 
 public:
-	STM32Syscalls(TIM_HandleTypeDef *htim1, ADC_HandleTypeDef *hadc1);
-
-//	STM32Syscalls();
+	STM32Syscalls(void *htim1, void *hadc1, void *hspi1, void *huart1);
 	virtual ~STM32Syscalls();
 	void set_htim_parameters();
 
@@ -55,6 +54,22 @@ public:
 	int start_timer(int delay) override;
 	bool timer_started() override;
 	int get_random() override;
+
+	/* gpio */
+	bool gpio_isset(PINS pin) override;
+	void gpio_init_pins(struct gpio_pins *pins) override;
+	void gpio_set_pin(PINS pin, bool level) override;
+
+	/* spi */
+    void spi_begin() override;
+    uint8_t spi_transfer(uint8_t tx) override;
+    void spi_transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) override;
+    void spi_transfern(uint8_t *buf, uint16_t len) override;
+
+    /* uart */
+    void uart_transmit(uint8_t *buffer, int len) override;
+
+
 };
 
 } /* namespace syscalls */

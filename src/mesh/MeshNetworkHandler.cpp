@@ -30,6 +30,8 @@ SOFTWARE.
 #include "NetworkData.h"
 #include "NetworkInterface.h"
 #include "SyscallsInterface.h"
+#include "DebugSingleton.h"
+#include "DebugInterface.h"
 
 namespace mesh {
 
@@ -38,6 +40,8 @@ MeshNetworkHandler::MeshNetworkHandler(NetworkData *network,
                                        NetAlgorithm::NetAlgorithmInterface *algorithm):
 			network(network), nw(nw), algorithm(algorithm) {
 	nw->registerSubscriber(this);
+	debugger = debugger::DebugSingleton::getInstance();
+
 	// TODO Auto-generated constructor stub
 
 }
@@ -61,6 +65,7 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 	 * They all they is doing is adding the messages to the message queue
 	 * If the message destination is to this node.
 	 */
+	debugger->debug("%s, %s, %d", __FILE__, __FUNCTION__, __LINE__);
 
 	switch(msg->header.msgno) {
 	case MSGNO::BROADCAST_ASSOCIATE_REQ:
@@ -161,6 +166,7 @@ void MeshNetworkHandler::network_recv(union mesh_internal_msg *msg) {
 }
 
 void MeshNetworkHandler::doBroadcastAssociateReq(){
+	debugger->debug("Func: %s, Line: %d", __FUNCTION__, __LINE__);
 	union mesh_internal_msg msg;
 	msg.header.msgno = MSGNO::BROADCAST_ASSOCIATE_REQ;
 	msg.header.hop_count = 0;

@@ -42,6 +42,11 @@ namespace network {
 class NetworkInterface;
 }
 
+namespace debugger {
+class DebugInterface;
+class DebugSingleton;
+}
+
 namespace mesh {
 class MeshNetworkHandler : network::NetworkInterfaceSubscriber{
 private:
@@ -49,6 +54,7 @@ private:
 	NetworkData *network;  /*!< Detailed description after the member */
 	network::NetworkInterface *nw;
 	NetAlgorithm::NetAlgorithmInterface *algorithm;
+	debugger::DebugInterface *debugger;
 
 public:
 	MeshNetworkHandler(NetworkData *network,

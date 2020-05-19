@@ -50,6 +50,40 @@ public:
 	int start_timer(int delay) override;
 	bool timer_started() override;
 	int get_random() override;
+
+	bool gpio_isset(PINS pin) override {
+		(void)pin;
+		return false;
+	}
+	void gpio_init_pins(struct gpio_pins *pins) override {
+		(void)pins;
+	}
+	void gpio_set_pin(PINS pin, bool level) override {
+		(void)pin;
+		(void)level;
+	}
+
+	void spi_begin() override {}
+	uint8_t spi_transfer(uint8_t tx) override {
+		(void)tx;
+		return 0;
+	}
+	void spi_transfernb(uint8_t *tbuf, uint8_t *rbuf, uint16_t len) override{
+		(void)tbuf;
+		(void)rbuf;
+		(void)len;
+	}
+	void spi_transfern(uint8_t *buf, uint16_t len) override {
+		(void)buf;
+		(void)len;
+	}
+
+	void uart_transmit(uint8_t *buffer, int len) override {
+		(void)buffer;
+		(void)len;
+	}
+
+
 private:
 	void armTimer(int ms);
 	void timerCallback(int ms);

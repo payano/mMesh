@@ -25,8 +25,8 @@ SOFTWARE.
 #pragma once
 
 #include <stdint.h>
-#include "NetworkInterfaceSubscriber.h"
 #include "NetworkInterface.h"
+#include "NetworkInterfaceSubscriber.h"
 #include "Islands.h"
 #include <list>
 namespace network {
@@ -47,7 +47,7 @@ public:
 	void addIsland(island::Island *island){islands.push_back(island);}
 	void removeIsland(island::Island *island){islands.remove(island);}
 	int init() override {return 0;}
-	void deinit() override {}
+	void deinit() override {;}
 	int start() override {return 0;}
 
 	void mute() {
@@ -63,11 +63,14 @@ public:
 		}
 		return 0;
 	}
-	void recv_from(union mesh_internal_msg *msg) override {
+	void recv_from(uint8_t from, union mesh_internal_msg *msg) override {
+		(void) from;
 		if(muted) return;
 		if(nullptr == cb) return;
 		cb->network_recv(msg);
 	}
+
+	void irq() override{};
 };
 
 } /* namespace network */

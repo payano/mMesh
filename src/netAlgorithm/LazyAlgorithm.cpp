@@ -26,6 +26,7 @@ SOFTWARE.
 #include "DataTypes.h"
 #include "NetworkData.h"
 #include "SyscallsInterface.h"
+
 namespace NetAlgorithm {
 
 LazyAlgorithm::LazyAlgorithm() : rank(2){

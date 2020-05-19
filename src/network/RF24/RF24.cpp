@@ -7,15 +7,11 @@
  */
 
 #include "nRF24L01.h"
-#include "RF24_config.h"
+//#include "RF24_config.h"
 #include "RF24.h"
 
-#include "SPIStm32f103.h"
-#include "GPIOStm32f103.h"
 #include "STM32Syscalls.h"
-#include "GPIOLinux.h"
 #include "LinuxSyscalls.h"
-#include "SPILinux.h"
 
 namespace network {
 
@@ -23,9 +19,6 @@ namespace network {
 
 #define LOW false
 #define HIGH true
-
-
-
 
 //
 //#if ARDUINO_API_VERSION >= 10000 && !defined(__DOXYGEN__)
@@ -95,7 +88,7 @@ void RF24::csn(bool mode)
 ////    delayMicroseconds(csDelay);
 //    #endif // !defined(RF24_LINUX)
 
-    gpio->set_pin(gpio::CSN_PIN, mode);
+    syscalls->gpio_set_pin(syscalls::CSN_PIN, mode);
     syscalls->microsleep(csDelay);
 }
 
@@ -107,7 +100,7 @@ void RF24::ce(bool level)
 //    if (ce_pin != csn_pin) {
 //        digitalWrite(ce_pin, level);
 //    }
-	gpio->set_pin(gpio::CE_PIN, level);
+	syscalls->gpio_set_pin(syscalls::CE_PIN, level);
 }
 
 /****************************************************************************/
@@ -157,10 +150,10 @@ uint8_t RF24::read_register(uint8_t reg, uint8_t* buf, uint8_t len)
 //    #else // !defined(RF24_LINUX)
 
     beginTransaction();
-    status = spi->transfer(R_REGISTER | (REGISTER_MASK & reg));
+    status = syscalls->spi_transfer(R_REGISTER | (REGISTER_MASK & reg));
 //    status = _SPI.transfer(R_REGISTER | (REGISTER_MASK & reg));
     while (len--) {
-        *buf++ = spi->transfer(0xff);
+        *buf++ = syscalls->spi_transfer(0xff);
     }
     endTransaction();
 //    #endif // !defined(RF24_LINUX)
@@ -190,8 +183,8 @@ uint8_t RF24::read_register(uint8_t reg)
 //    #else // !defined(RF24_LINUX)
 
     beginTransaction();
-    spi->transfer(R_REGISTER | (REGISTER_MASK & reg));
-    result = spi->transfer(0xff);
+    syscalls->spi_transfer(R_REGISTER | (REGISTER_MASK & reg));
+    result = syscalls->spi_transfer(0xff);
     endTransaction();
 
 //    #endif // !defined(RF24_LINUX)
@@ -222,9 +215,9 @@ uint8_t RF24::write_register(uint8_t reg, const uint8_t* buf, uint8_t len)
 //    #else // !defined(RF24_LINUX)
 
     beginTransaction();
-    status = spi->transfer(W_REGISTER | (REGISTER_MASK & reg));
+    status = syscalls->spi_transfer(W_REGISTER | (REGISTER_MASK & reg));
     while (len--) {
-        spi->transfer(*buf++);
+    	syscalls->spi_transfer(*buf++);
     }
     endTransaction();
 //    #endif // !defined(RF24_LINUX)
@@ -253,8 +246,8 @@ uint8_t RF24::write_register(uint8_t reg, uint8_t value)
 //    #else // !defined(RF24_LINUX)
 
     beginTransaction();
-    status = spi->transfer(W_REGISTER | (REGISTER_MASK & reg));
-    spi->transfer(value);
+    status = syscalls->spi_transfer(W_REGISTER | (REGISTER_MASK & reg));
+    syscalls->spi_transfer(value);
     endTransaction();
 
 //    #endif // !defined(RF24_LINUX)
@@ -295,12 +288,12 @@ uint8_t RF24::write_payload(const void* buf, uint8_t data_len, const uint8_t wri
 //    #else // !defined(RF24_LINUX)
 
     beginTransaction();
-    status = spi->transfer(writeType);
+    status = syscalls->spi_transfer(writeType);
     while (data_len--) {
-        spi->transfer(*current++);
+    	syscalls->spi_transfer(*current++);
     }
     while (blank_len--) {
-        spi->transfer(0);
+    	syscalls->spi_transfer(0);
     }
     endTransaction();
 
@@ -352,12 +345,12 @@ uint8_t RF24::read_payload(void* buf, uint8_t data_len)
 //    #else // !defined(RF24_LINUX)
 
     beginTransaction();
-    status = spi->transfer(R_RX_PAYLOAD);
+    status = syscalls->spi_transfer(R_RX_PAYLOAD);
     while (data_len--) {
-        *current++ = spi->transfer(0xFF);
+        *current++ = syscalls->spi_transfer(0xFF);
     }
     while (blank_len--) {
-    	spi->transfer(0xff);
+    	syscalls->spi_transfer(0xff);
     }
     endTransaction();
 
@@ -388,7 +381,7 @@ uint8_t RF24::spiTrans(uint8_t cmd)
     uint8_t status;
 
     beginTransaction();
-    status = spi->transfer(cmd);
+    status = syscalls->spi_transfer(cmd);
     endTransaction();
 
     return status;
@@ -470,13 +463,11 @@ void RF24::print_address_register(const char* name, uint8_t reg, uint8_t qty)
 
 /****************************************************************************/
 
-RF24::RF24(gpio::GPIOInterface *mesh_gpio, syscalls::SyscallsInterface *mesh_syscalls, spi::SPIInterface *mesh_spi)
+RF24::RF24(syscalls::SyscallsInterface *mesh_syscalls)
 //RF24::RF24(uint16_t _cepin, uint16_t _cspin)
         :p_variant(false), payload_size(32), dynamic_payloads_enabled(false), addr_width(5),
          csDelay(5)//,pipe0_reading_address(0)
 {
-	this->spi = mesh_spi;
-	this->gpio = mesh_gpio;
 	this->syscalls = mesh_syscalls;
 
     pipe0_reading_address[0] = 0;
@@ -704,7 +695,7 @@ bool RF24::begin(void)
 //        pinMode(csn_pin, OUTPUT);
 //    }
 
-    spi->begin();
+    syscalls->spi_begin();
     ce(LOW);
     csn(HIGH);
 //            #if defined(__ARDUINO_X86__)
@@ -883,7 +874,7 @@ void RF24::powerUp(void)
 void RF24::errNotify()
 {
     #if defined(SERIAL_DEBUG) || defined(RF24_LINUX)
-    printf_P(PSTR("RF24 HARDWARE FAIL: Radio not responding, verify pin connections, wiring, etc.\r\n"));
+//    printf_P(PSTR("RF24 HARDWARE FAIL: Radio not responding, verify pin connections, wiring, etc.\r\n"));
     #endif
     #if defined(FAILURE_HANDLING)
     failureDetected = 1;
@@ -1177,8 +1168,8 @@ uint8_t RF24::getDynamicPayloadSize(void)
 //    endTransaction();
 //    #else
     beginTransaction();
-    spi->transfer(R_RX_PL_WID);
-    result = spi->transfer(0xff);
+    syscalls->spi_transfer(R_RX_PL_WID);
+    result = syscalls->spi_transfer(0xff);
     endTransaction();
 //    #endif
 
@@ -1194,7 +1185,7 @@ uint8_t RF24::getDynamicPayloadSize(void)
 
 bool RF24::available(void)
 {
-    return available(NULL);
+    return available(nullptr);
 }
 
 /****************************************************************************/
@@ -1286,7 +1277,7 @@ void RF24::openReadingPipe(uint8_t child, uint64_t address)
     // openWritingPipe() will overwrite the pipe 0 address, so
     // startListening() will have to restore it.
     if (child == 0) {
-        memcpy(pipe0_reading_address, &address, addr_width);
+    	syscalls->copy_data(pipe0_reading_address, &address, addr_width);
     }
 
     if (child <= 6) {
@@ -1328,7 +1319,7 @@ void RF24::openReadingPipe(uint8_t child, const uint8_t* address)
     // openWritingPipe() will overwrite the pipe 0 address, so
     // startListening() will have to restore it.
     if (child == 0) {
-        memcpy(pipe0_reading_address, address, addr_width);
+    	syscalls->copy_data(pipe0_reading_address, address, addr_width);
     }
     if (child <= 6) {
         // For pipes 2-5, only write the LSB
@@ -1359,8 +1350,8 @@ void RF24::closeReadingPipe(uint8_t pipe)
 void RF24::toggle_features(void)
 {
     beginTransaction();
-    spi->transfer(ACTIVATE);
-    spi->transfer(0x73);
+    syscalls->spi_transfer(ACTIVATE);
+    syscalls->spi_transfer(0x73);
     endTransaction();
 }
 
@@ -1459,10 +1450,10 @@ void RF24::writeAckPayload(uint8_t pipe, const void* buf, uint8_t len)
 //    endTransaction();
 //    #else
     beginTransaction();
-    spi->transfer(W_ACK_PAYLOAD | (pipe & 0x07));
+    syscalls->spi_transfer(W_ACK_PAYLOAD | (pipe & 0x07));
 
     while (data_len--) {
-    	spi->transfer(*current++);
+    	syscalls->spi_transfer(*current++);
     }
     endTransaction();
 

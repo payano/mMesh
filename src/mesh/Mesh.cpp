@@ -30,11 +30,8 @@ SOFTWARE.
 #include "NetworkData.h"
 #include "MeshNetworkHandler.h"
 #include "SyscallsInterface.h"
-/* should be removed later */
-//#include <stdio.h>
-#include <unistd.h>
-#include <chrono>
-//#include <iostream>
+#include "DebugSingleton.h"
+#include "DebugInterface.h"
 
 namespace mesh {
 
@@ -80,8 +77,10 @@ Mesh::Mesh(NetworkInterface *nw, syscalls::SyscallsInterface *syscall) : nw(nw),
 	network = new NetworkData(syscall);
 	statedata = new stateData;
 	algorithm = new NetAlgorithm::LazyAlgorithm();
-
+	debugger = debugger::DebugSingleton::getInstance();
 	networkHandler = new MeshNetworkHandler(network, nw, algorithm);
+
+	this->set_generated_mac_addr();
 
 	initStateMachine();
 //	timerStarted = false;
@@ -112,6 +111,7 @@ void Mesh::setMaster() {
 	mSetMaster = true;
 	setName(name);
 	setTemporaryMacAddr(&MASTER);
+	debugger->info("%s", "Mesh setting master");
 }
 
 int Mesh::run() {
@@ -184,15 +184,19 @@ void Mesh::stateMachine()
 {
 	switch(statedata->topState) {
 	case STATE_INIT:
+		debugger->debug("Func: %s, Line: %d: %s", __FUNCTION__, __LINE__, "STATE_INIT");
 		sm_init();
 		break;
 	case STATE_MASTER:
+		debugger->debug("Func: %s, Line: %d: %s", __FUNCTION__, __LINE__, "STATE_MASTER");
 		sm_master();
 		break;
 	case STATE_STARTING:
+		debugger->debug("Func: %s, Line: %d: %s", __FUNCTION__, __LINE__, "STATE_STARTING");
 		sm_starting();
 		break;
 	case STATE_STARTED:
+		debugger->debug("Func: %s, Line: %d: %s", __FUNCTION__, __LINE__, "STATE_STARTED");
 		sm_started();
 		break;
 	case STATE_NONE:
@@ -234,6 +238,7 @@ void Mesh::sm_init()
 
 void Mesh::sm_starting_seeking_parent()
 {
+	debugger->debug("Func: %s, Line: %d", __FUNCTION__, __LINE__);
 	armTimer(SEEKING_PARENT_TIMER);
 	statedata->starting_state = STARTING_STATE::STARTING_CHOOSING_PARENT;
 	networkHandler->doBroadcastAssociateReq();
@@ -337,22 +342,29 @@ void Mesh::sm_starting()
 {
 	// try to get online.
 	switch(statedata->starting_state) {
+	default:
 	case STARTING_SEEKING_PARENT:
+		debugger->debug("Line: %d: %s", __LINE__, "STARTING_SEEKING_PARENT");
 		sm_starting_seeking_parent();
 		break;
 	case STARTING_CHOOSING_PARENT:
+		debugger->debug("Line: %d: %s", __LINE__, "STARTING_CHOOSING_PARENT");
 		sm_starting_choosing_parent();
 		break;
 	case STARTING_REGISTER_TO_PARENT:
+		debugger->debug("Line: %d: %s", __LINE__, "STARTING_REGISTER_TO_PARENT");
 		sm_starting_register_to_parent();
 		break;
 	case STARTING_WAITING_FOR_PARENT:
+		debugger->debug("Line: %d: %s", __LINE__, "STARTING_WAITING_FOR_PARENT");
 		sm_starting_waiting_for_parent();
 		break;
 	case STARTING_REGISTER_TO_MASTER:
+		debugger->debug("Line: %d: %s", __LINE__, "STARTING_REGISTER_TO_MASTER");
 		sm_starting_register_to_master();
 		break;
 	case STARTING_WAITING_FOR_MASTER:
+		debugger->debug("Line: %d: %s", __LINE__, "STARTING_WAITING_FOR_MASTER");
 		sm_starting_waiting_for_master();
 		break;
 	}

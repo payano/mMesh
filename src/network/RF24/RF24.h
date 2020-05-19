@@ -29,13 +29,13 @@ namespace syscalls {
 class SyscallsInterface;
 }
 
-
-#if defined (RF24_LINUX) || defined (LITTLEWIRE)
-    #include "utility/includes.h"
-#elif defined SOFTSPI
-    #include <DigitalIO.h>
-#endif
-
+//
+//#if defined (RF24_LINUX) || defined (LITTLEWIRE)
+//    #include "utility/includes.h"
+//#elif defined SOFTSPI
+//    #include <DigitalIO.h>
+//#endif
+//
 
 namespace network {
 /**
@@ -81,8 +81,6 @@ class RF24 {
 private:
 
 
-	spi::SPIInterface *spi;
-	gpio::GPIOInterface *gpio;
 	syscalls::SyscallsInterface *syscalls;
 
     uint16_t ce_pin; /**< "Chip Enable" pin, activates the RX or TX role */
@@ -145,7 +143,7 @@ public:
   * @param spispeed For RPi, the SPI speed in MHZ ie: BCM2835_SPI_SPEED_8MHZ
   */
 
-    RF24(gpio::GPIOInterface *mesh_gpio, syscalls::SyscallsInterface *mesh_syscalls, spi::SPIInterface *mesh_spi);
+    RF24(syscalls::SyscallsInterface *mesh_syscalls);
     //#endif
 
     #if defined (RF24_LINUX)

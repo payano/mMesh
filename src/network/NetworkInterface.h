@@ -43,13 +43,14 @@ public:
 	virtual void deinit() = 0;
 	virtual int start() = 0;
 	virtual int sendto(const struct net_address *dest, union mesh_internal_msg *msg) = 0;
-	virtual void recv_from(union mesh_internal_msg *msg) = 0;
-	void setAddr(const struct net_address *addr) {
+	virtual void recv_from(uint8_t from, union mesh_internal_msg *msg) = 0;
+	virtual void setAddr(const struct net_address *addr) {
 		syscalls::SyscallsInterface::copy_data(&mac, addr, sizeof(*addr));
 	}
-	void getAddr(struct net_address *addr) {
+	virtual void getAddr(struct net_address *addr) {
 		syscalls::SyscallsInterface::copy_data(addr, &mac, sizeof(*addr));
 	}
+	virtual void irq() = 0;
 	virtual ~NetworkInterface(){}
 };
 

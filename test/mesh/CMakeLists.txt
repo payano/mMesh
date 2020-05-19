@@ -8,8 +8,6 @@ TARGET_LINK_LIBRARIES(meshTests
     Network
     Islands
     NetAlgorithm
-    GPIO
-    Spi
     Syscalls
     Debug
     libgtest
@@ -24,10 +22,9 @@ include_directories(
 "../../src/mesh"
 "../../src/node"
 "../../src/islands"
-"../../src/GPIO"
 "../../src/syscalls"
-"../../src/spi"
 "../../src/debug"
+"../../src/nethelper"
 )
 
 add_test(NAME meshTests

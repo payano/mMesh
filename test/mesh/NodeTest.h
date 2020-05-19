@@ -30,6 +30,7 @@ SOFTWARE.
 #include "Node.h"
 #include <chrono>
 #include "SyscallsInterface.h"
+#include "Nethelper.h"
 
 constexpr int SLAVE_TO_MASTER(5);
 constexpr int SLAVE_COUNT(4);

@@ -55,17 +55,10 @@ add_library(NetAlgorithm STATIC
     src/netAlgorithm/LazyAlgorithm.cpp
 )
 
-add_library(Spi STATIC
-	src/spi/SPIStm32f103.cpp
-)
-
 add_library(Syscalls STATIC
+	src/syscalls/SyscallsInterface.cpp
 	src/syscalls/LinuxSyscalls.cpp
 	src/syscalls/STM32Syscalls.cpp
-)
-
-add_library(GPIO STATIC
-	src/GPIO/GPIOStm32f103.cpp
 )
 
 add_library(Debug STATIC
@@ -92,6 +85,7 @@ include_directories(
 "src/GPIO"
 "src/syscalls"
 "src/debug"
+"src/nethelper"
 )
 
 ############################################################

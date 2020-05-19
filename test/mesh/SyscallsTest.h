@@ -57,7 +57,7 @@ TEST_F(SyscallsTest,TestCopyData){
 	SyscallsInterface::copy_data(&modified[0],&original[0], 8);
 	ASSERT_EQ(0xbaba, (uint16_t)modified[1]);
 
-	SyscallsInterface::copy_data(&modified[0],&original[0], 14);
+	SyscallsInterface::copy_data(&modified[0],&original[0], 12);
 	ASSERT_EQ(0xc0dec0de, (uint32_t)modified[2]);
 
 }

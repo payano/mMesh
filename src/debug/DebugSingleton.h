@@ -23,7 +23,10 @@ SOFTWARE.
  */
 
 #pragma once
-#include "LinuxDebug.h"
+
+namespace syscalls {
+class SyscallsInterface;
+}
 
 namespace debugger {
 class DebugInterface;
@@ -34,7 +37,7 @@ private:
 	DebugSingleton();
 public:
 	static void createLinuxInstance();
-	static void createSTM32Instance(void *huart1);
+	static void createSTM32Instance(syscalls::SyscallsInterface *syscalls);
 
 	static DebugInterface *getInstance(){ return debugger;}
 };
